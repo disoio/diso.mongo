@@ -1,0 +1,34 @@
+{
+  "name": "diso.mongo",
+  "version": "0.0.1",
+  "description": "Schema and denormalization patterns for MongoDB",
+  "main": "build/index.js",
+  "scripts": {
+    "test": "node build/test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/disoio/diso.mongo"
+  },
+  "keywords": [
+    "mongodb",
+    "diso"
+  ],
+  "author": "Stephen Handley <stephen.handley@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "~0.9.9",
+    "mongojs": "^0.13.0",
+    "requireindex": "1.0.0",
+    "type-of-is" : "~3.3.0"
+  },
+  "devDependencies": {
+    "asserts": "~4.0.0",
+    "coffee-script": "~1.7.1",
+    "docco": "~0.6.3",
+    "grunt": "~0.4.4",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-contrib-coffee": "~0.10.1",
+    "grunt-shell": "~0.7.0"
+  }
+}
