@@ -1,5 +1,5 @@
 (function() {
-  var BaseModel, EmbeddedModel, Model, MongoDB, MongoJS, Type, omit, underscorize, utils,
+  var DataModel, Model, MongoDB, MongoJS, Type, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -9,15 +9,9 @@
 
   Type = require('type-of-is');
 
-  BaseModel = require('./BaseModel');
-
-  EmbeddedModel = require('./EmbeddedModel');
+  DataModel = require('./DataModel');
 
   utils = require('./utils');
-
-  omit = utils.omit;
-
-  underscorize = utils.underscorize;
 
   Model = (function(_super) {
     __extends(Model, _super);
@@ -28,9 +22,13 @@
 
     Model.db_url = null;
 
+    Model.strict = false;
+
+    Model.add_id = true;
+
     Model.collection = function(name) {
       var collection_name, db, _ref;
-      collection_name = name ? name : (_ref = this.collection_name) != null ? _ref : underscorize(this.name);
+      collection_name = name ? name : (_ref = this.collection_name) != null ? _ref : utils.underscorize(this.name);
       db = MongoJS(this.db_url);
       return db.collection(collection_name);
     };
@@ -63,11 +61,11 @@
       callback = options.callback;
       projection = options.projection || {};
       return this.collection()[method](query, projection, function(error, result) {
-        var doc;
+        var doc, models;
         if (error) {
           return callback(error, null);
         }
-        result = (function() {
+        models = (function() {
           var _i, _len, _results;
           if (Type(result, Array)) {
             _results = [];
@@ -84,7 +82,7 @@
             }
           }
         })();
-        return callback(null, result);
+        return callback(null, models);
       });
     };
 
@@ -157,7 +155,7 @@
 
     return Model;
 
-  })(BaseModel);
+  })(DataModel);
 
   module.exports = Model;
 

@@ -2,15 +2,13 @@ MongoDB = require('mongodb')
 MongoJS = require('mongojs')
 Type    = require('type-of-is')
 
-BaseModel     = require('./BaseModel')
-EmbeddedModel = require('./EmbeddedModel')
+DataModel = require('./DataModel')
+utils     = require('./utils')
 
-utils        = require('./utils')
-omit         = utils.omit
-underscorize = utils.underscorize
-
-class Model extends BaseModel  
+class Model extends DataModel  
   @db_url : null
+  @strict : false
+  @add_id : true
       
   @collection: (name)->
     # @db_url, @collection_name defined in child
@@ -20,7 +18,7 @@ class Model extends BaseModel
     collection_name = if name
       name
     else
-      @collection_name ? underscorize(@name)
+      @collection_name ? utils.underscorize(@name)
     
     db = MongoJS(@db_url)
     db.collection(collection_name)
@@ -54,7 +52,7 @@ class Model extends BaseModel
       if error
         return callback(error, null)
 
-      result = if Type(result, Array)
+      models = if Type(result, Array)
         new _Model(doc) for doc in result
       else
         if result
@@ -62,7 +60,7 @@ class Model extends BaseModel
         else
           null
 
-      callback(null, result)
+      callback(null, models)
     )
   
   # find the count of instances satisfying given query (optional)

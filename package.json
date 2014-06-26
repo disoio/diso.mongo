@@ -23,7 +23,7 @@
     "type-of-is" : "~3.3.0"
   },
   "devDependencies": {
-    "asserts": "~4.0.0",
+    "asserts": "~4.0.1",
     "coffee-script": "~1.7.1",
     "docco": "~0.6.3",
     "grunt": "~0.4.4",

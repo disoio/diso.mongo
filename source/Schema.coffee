@@ -2,10 +2,12 @@ MongoDB = require('mongodb')
 Type    = require('type-of-is')
 
 BaseModel = require('./BaseModel')
-rmerge    = require('./utils').rmerge
+utils     = require('./utils')
 
 class SchemaBase
-  
+  attribute : (path)->
+    null
+
 # SchemaPrimitive
 # ---------------
 # 
@@ -17,9 +19,10 @@ class SchemaPrimitive extends SchemaBase
     super()
     
   cast : (obj)->
-    unless @isType(obj)
-      obj = new @Type(obj)
-    obj
+    if (@isType(obj) or (obj is null) or (obj is undefined))
+      obj
+    else
+      new @Type(obj)
   
   isType : (obj)->
     Type(obj, @Type)
@@ -101,7 +104,6 @@ _primitive_schemas = [
   SchemaObject
 ]
 
-
 _schemaForPrimitiveType = (()->
   _primitive_types = _primitive_schemas.map((PS)->
     ps = new PS()
@@ -111,10 +113,11 @@ _schemaForPrimitiveType = (()->
   (_Type)->
     index = _primitive_types.indexOf(_Type)
     if (index is -1)
-      return null
+      null
     else
-      return _primitive_schemas[index]
+      _primitive_schemas[index]
 )()
+
 
 # Schema
 # ------------
@@ -123,19 +126,23 @@ _schemaForPrimitiveType = (()->
 # constructor gets called via Model
 
 class Schema extends SchemaBase
-  constructor : (spec, options = {})->
+  constructor : (opts)->
     super()
+
+    @Model  = opts.model
+    schema  = opts.schema
+    options = opts.options
     
-    rmerge(options, {
+    utils.rmerge(options, {
       strict : true
     })
-    @options = options
+    @strict = options.strict
     
-    unless '_id' in spec
-      spec._id = SchemaObjectID
+    if (('_id' not in schema) and (options.add_id))
+      schema._id = SchemaObjectID
     
-    @processed_schema = this._process(spec)
-  
+    @processed_schema = @_process(schema)
+
   _process : (spec)->
     processed = {}
     
@@ -151,19 +158,21 @@ class Schema extends SchemaBase
         else
           SchemaType = this._processAtom(SchemaType[0])
           unless SchemaType
-            throw("diso.mongo.Schema: Invalid schema type for field: #{attr}")
+            throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
           processed[attr] = new SchemaTypedArray(SchemaType)
          
       else
         SchemaType = this._processAtom(SchemaType)
+
         unless SchemaType
-          throw("diso.mongo.Schema: Invalid schema type for field: #{attr}")
+          throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
+        
         processed[attr] = SchemaType
     
     processed
   
   # atoms are models, primitive schemas or primitive types  
-  _processAtom : (SchemaType)->   
+  _processAtom : (SchemaType)->
     if (SchemaType is undefined) 
       return null
      
@@ -172,18 +181,22 @@ class Schema extends SchemaBase
 
     PrimitiveSchemaType = _schemaForPrimitiveType(SchemaType)
     if PrimitiveSchemaType
-      type = new PrimitiveSchemaType()
-      return type
+      return (new PrimitiveSchemaType())
 
     # if schema value is a descendant of Model, return a 
     # schema model that casts to that Model
-    return if Type.extension(SchemaType, BaseModel)
-      return new SchemaModel(SchemaType)
+    if Type.extension(SchemaType, BaseModel)
+      SchemaType._schema
     else
       null
   
-  
+  isType : (obj)->
+    Type(obj, @Model)
+
   cast : (obj)->
+    if @isType(obj)
+      return obj
+
     result = {}
     
     for k, v of obj
@@ -191,19 +204,28 @@ class Schema extends SchemaBase
             
       if schema      
         unless (schema instanceof SchemaBase)
-          throw("diso.mongo.Schema: invalid schema for #{k}: #{schema}")
+          throw new Error("diso.mongo.Schema: invalid schema for #{k}: #{schema}")
         
         try
           result[k] = schema.cast(v)
         catch error
-          throw("diso.mongo.Schema: #{k} : #{error}")
+          throw new Error("diso.mongo.Schema: #{k}: #{error}")
                           
       else
         unless @options.strict
-          result[k] = v 
-        
+          result[k] = v
+    
     result
 
+  attribute : (path)->
+    [first, rest] = utils.shiftPath(path)
+    next = @processed_schema[first]
+
+    if rest
+      next.attribute(rest)
+    else
+      next
+    
 
 class SchemaTypedArray extends SchemaBase
   constructor : (@Type)->
@@ -211,7 +233,7 @@ class SchemaTypedArray extends SchemaBase
 
   cast : (values)->
     unless Array.isArray(values)
-      throw("diso.mongo.Schema: Expecting array")
+      throw new Error("diso.mongo.Schema: Expecting array")
     
     _Type = @Type
     values.map((value)->
@@ -224,30 +246,38 @@ class SchemaTypedArray extends SchemaBase
   isType : (obj)->
     Array.isArray(obj)
 
+  attribute : (path)->
+    parts = utils.splitPath(path)
+    first = parts.shift()
+
+    if isNaN(first)
+      throw new Error("diso.mongo.Schema: Missing array index")
+    else
+      first = parts.shift() # get next part (skip the array index)
+      next = @Type.attribute(first)
+
+      if (parts.length > 0)
+        next.attribute(parts)
+      else
+        next
+
 
 class SchemaUntypedArray extends SchemaBase
   cast : (values)->
     unless Array.isArray(values)
-      throw("diso.mongo.Schema: Expecting array for key:#{k}")
+      throw new Error("diso.mongo.Schema: Expecting array for key:#{k}")
       
     values
     
   isType : (obj)->
     Array.isArray(obj)
-    
-    
-class SchemaModel extends SchemaBase
-  constructor : (@Model)->
-    super()
-    
-  cast : (obj)->
-    if @isType(obj)
-      obj
+
+  attribute : (path)->
+    if isNaN(first)
+      throw new Error("diso.mongo.Schema: Missing array index")
     else
-      new @Model(obj)
-      
-  isType : (obj)->
-    Type(obj, @Model)
+      null
+
 
 class SchemaReference extends SchemaBase
   constructor : (data)->
