@@ -1,10 +1,12 @@
 (function() {
-  var BaseModel, DataModel, Schema, Type, utils,
+  var BaseModel, DataModel, MongoDB, Schema, Type, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
   Type = require('type-of-is');
+
+  MongoDB = require('mongodb');
 
   BaseModel = require('./BaseModel');
 
@@ -16,6 +18,9 @@
     __extends(DataModel, _super);
 
     function DataModel(data) {
+      if (data && this.constructor.add_id && (!('_id' in data))) {
+        data._id = new MongoDB.ObjectID();
+      }
       this._data = this.constructor.cast(data);
     }
 
@@ -69,11 +74,11 @@
       }
     };
 
-    DataModel.prototype.toJSON = function() {
+    DataModel.prototype._map = function(include_$model) {
       var getData, k, result, v, _ref;
       getData = function(v) {
         if (Type.instance(v, BaseModel)) {
-          return v.toJSON();
+          return v._map(include_$model);
         } else {
           return v;
         }
@@ -84,14 +89,42 @@
         v = _ref[k];
         result[k] = Type(v, Array) ? v.map(getData) : getData(v);
       }
+      if (include_$model) {
+        result.$model = this.constructor.name;
+      }
       return result;
     };
 
+    DataModel.deflate = function(obj) {
+      var k, res, v;
+      switch (Type(obj)) {
+        case Array:
+          return obj.map(this.deflate);
+        case Object:
+          res = {};
+          for (k in obj) {
+            v = obj[k];
+            res[k] = this.deflate(v);
+          }
+          return res;
+        default:
+          if (Type.instance(obj, BaseModel)) {
+            return obj.deflate();
+          } else {
+            return obj;
+          }
+      }
+    };
+
+    DataModel.prototype.deflate = function() {
+      return this._map(true);
+    };
+
     DataModel.prototype.data = function() {
-      var arg, args, attr, result, _i, _len;
+      var arg, args, attr, k, result, v, _i, _len;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       if (args.length === 0) {
-        return this.toJSON();
+        return this._map(false);
       }
       if (args.length === 1) {
         arg = args[0];
@@ -106,19 +139,18 @@
             }
             return result;
           case Object:
-            this._dataAdd(arg);
+            for (k in arg) {
+              v = arg[k];
+              this._dataPath(k, v);
+            }
             return this;
         }
       }
       if (args.length === 2) {
-        return this._dataPath(args[0], args[1]);
+        this._dataPath(args[0], args[1]);
+        return this;
       }
       throw new Error("diso.mongo.Model: Invalid argument to .data");
-    };
-
-    DataModel.prototype._dataAdd = function(data_obj) {
-      var cast_obj;
-      return cast_obj = this.constructor.cast(data_obj);
     };
 
     DataModel.prototype._dataPath = function(path, value) {
@@ -155,46 +187,16 @@
       }
     };
 
-    DataModel.prototype.set = function(attribute, value) {
-      return this._dataPath(attribute, value);
+    DataModel.prototype.set = function(path, value) {
+      return this._dataPath(path, value);
     };
 
-    DataModel.prototype.get = function(attribute) {
-      return this._dataPath(attribute);
+    DataModel.prototype.get = function(path) {
+      return this._dataPath(path);
     };
 
     DataModel.prototype.validate = function() {
       return null;
-    };
-
-    DataModel.prototype.reference = function(attributes) {
-      var attr, ref, _i, _len, _results;
-      if (!Type(attributes, Array)) {
-        attributes = [attributes];
-      }
-      ref = {
-        type: this.constructor.name
-      };
-      _results = [];
-      for (_i = 0, _len = attributes.length; _i < _len; _i++) {
-        attr = attributes[_i];
-        _results.push(ref[attr] = this._dataPath(attr));
-      }
-      return _results;
-    };
-
-    DataModel.reference = function(attributes) {
-      if (attributes) {
-        if (!Type(attributes, Array)) {
-          attributes = [attributes];
-        }
-      } else {
-        throw new Error("diso.mongo.Model: Must pass attributes to Model.reference");
-      }
-      return new Schema.Reference({
-        Model: this,
-        attributes: attributes
-      });
     };
 
     return DataModel;

@@ -1,5 +1,5 @@
 (function() {
-  var DataModel, Model, MongoDB, MongoJS, Type, utils,
+  var DataModel, Model, MongoDB, MongoJS, Schema, Type, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -10,6 +10,8 @@
   Type = require('type-of-is');
 
   DataModel = require('./DataModel');
+
+  Schema = require('./Schema');
 
   utils = require('./utils');
 
@@ -33,33 +35,33 @@
       return db.collection(collection_name);
     };
 
-    Model.find = function(options) {
+    Model.find = function(opts) {
       var id;
-      if ('id' in options) {
-        id = options.id;
+      if ('id' in opts) {
+        id = opts.id;
         if (Type(id, String)) {
           id = new MongoDB.ObjectID(id);
         }
-        options.query = {
+        opts.query = {
           _id: id
         };
       }
-      options.method = 'find';
-      return this._findHelper(options);
+      opts.method = 'find';
+      return this._findHelper(opts);
     };
 
-    Model.findOne = function(options) {
-      options.method = 'findOne';
-      return this._findHelper(options);
+    Model.findOne = function(opts) {
+      opts.method = 'findOne';
+      return this._findHelper(opts);
     };
 
-    Model._findHelper = function(options) {
+    Model._findHelper = function(opts) {
       var callback, method, projection, query, _Model;
       _Model = this;
-      method = options.method;
-      query = options.query;
-      callback = options.callback;
-      projection = options.projection || {};
+      method = opts.method;
+      query = opts.query;
+      callback = opts.callback;
+      projection = opts.projection || {};
       return this.collection()[method](query, projection, function(error, result) {
         var doc, models;
         if (error) {
@@ -86,21 +88,67 @@
       });
     };
 
-    Model.count = function(query, callback) {
-      if (arguments.length === 1) {
-        callback = query;
-        query = null;
-      }
-      return this.collection().count(query, callback);
+    Model.findAndModify = function(opts) {
+      var callback;
+      callback = opts.callback;
+      delete opts.callback;
+      return this.collection().findAndModify(opts, (function(_this) {
+        return function(error, doc, last_error) {
+          var model;
+          if (error) {
+            return callback(error, null);
+          } else {
+            model = doc ? new _this(doc) : null;
+            return callback(null, model);
+          }
+        };
+      })(this));
     };
 
-    Model.update = function(options) {
-      var callback, query, update;
-      query = options.query;
-      update = options.update;
-      callback = options.callback;
-      options = options.options || {};
+    Model.count = function(opts) {
+      return this.collection().count(opts.query, opts.callback);
+    };
+
+    Model.update = function(opts) {
+      var callback, options, query, update;
+      query = opts.query;
+      update = opts.update;
+      callback = opts.callback;
+      options = opts.options || {};
       return this.collection().update(query, update, options, callback);
+    };
+
+    Model.insert = function(opts) {
+      return this.collection().insert(opts.data, (function(_this) {
+        return function(error, docs) {
+          var doc, is_array, models, result;
+          if (error) {
+            return opts.callback(error, null);
+          }
+          is_array = Type(docs, Array);
+          if (!is_array) {
+            docs = [docs];
+          }
+          models = (function() {
+            var _i, _len, _results;
+            _results = [];
+            for (_i = 0, _len = docs.length; _i < _len; _i++) {
+              doc = docs[_i];
+              _results.push(new this(doc));
+            }
+            return _results;
+          }).call(_this);
+          result = is_array ? models : models[0];
+          return opts.callback(null, result);
+        };
+      })(this));
+    };
+
+    Model.prototype.insert = function(callback) {
+      return this.constructor.insert({
+        data: this.data(),
+        callback: callback
+      });
     };
 
     Model.prototype.save = function(callback) {
@@ -150,6 +198,33 @@
           }
           return callback(error, num_removed);
         });
+      });
+    };
+
+    Model.prototype.reference = function(attributes) {
+      var attr, ref, _i, _len;
+      if (!Type(attributes, Array)) {
+        attributes = [attributes];
+      }
+      ref = {};
+      for (_i = 0, _len = attributes.length; _i < _len; _i++) {
+        attr = attributes[_i];
+        ref[attr] = this._dataPath(attr);
+      }
+      return ref;
+    };
+
+    Model.reference = function(attributes) {
+      if (attributes) {
+        if (!Type(attributes, Array)) {
+          attributes = [attributes];
+        }
+      } else {
+        attributes = ['_id'];
+      }
+      return new Schema.Reference({
+        model: this,
+        attributes: attributes
       });
     };
 

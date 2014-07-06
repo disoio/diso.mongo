@@ -8,17 +8,14 @@
 
   module.exports = {
     rmerge: function(original, merge) {
-      var k, v, _results;
-      _results = [];
+      var k, v;
       for (k in merge) {
         v = merge[k];
-        if (__indexOf.call(original, k) < 0) {
-          _results.push(original[k] = v);
-        } else {
-          _results.push(void 0);
+        if (!(k in original)) {
+          original[k] = v;
         }
       }
-      return _results;
+      return original;
     },
     omit: function(object, keys) {
       var k, res, v, _results;

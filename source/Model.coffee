@@ -3,6 +3,7 @@ MongoJS = require('mongojs')
 Type    = require('type-of-is')
 
 DataModel = require('./DataModel')
+Schema    = require('./Schema')
 utils     = require('./utils')
 
 class Model extends DataModel  
@@ -25,28 +26,28 @@ class Model extends DataModel
     
   
   # Find an instance of this model, given criteria
-  @find: (options)->
-    if ('id' of options)
-      id = options.id
+  @find: (opts)->
+    if ('id' of opts)
+      id = opts.id
       if Type(id, String)
         id = new MongoDB.ObjectID(id)
 
-      options.query = { _id : id }
+      opts.query = { _id : id }
 
-    options.method = 'find'
-    @_findHelper(options)
+    opts.method = 'find'
+    @_findHelper(opts)
   
-  @findOne: (options)->
-    options.method = 'findOne'
-    @_findHelper(options)
+  @findOne: (opts)->
+    opts.method = 'findOne'
+    @_findHelper(opts)
   
-  @_findHelper: (options)->
+  @_findHelper: (opts)->
     _Model = @
 
-    method     = options.method
-    query      = options.query
-    callback   = options.callback
-    projection = options.projection || {}
+    method     = opts.method
+    query      = opts.query
+    callback   = opts.callback
+    projection = opts.projection || {}
     
     @collection()[method](query, projection, (error, result)->
       if error
@@ -63,22 +64,60 @@ class Model extends DataModel
       callback(null, models)
     )
   
-  # find the count of instances satisfying given query (optional)
-  @count: (query, callback)->
-    if (arguments.length is 1)
-      callback = query
-      query = null
-    
-    @collection().count(query, callback)
+  @findAndModify : (opts)->
+    callback = opts.callback
+    delete opts.callback
 
-  @update : (options)->
-    query    = options.query
-    update   = options.update
-    callback = options.callback
-    options  = options.options || {}
+    @collection().findAndModify(opts, (error, doc, last_error)=>
+      if error 
+        return callback(error, null)
+      else 
+        model = if doc
+          new @(doc)
+        else
+          null
+
+        callback(null, model)
+    )
+
+  # find the count of instances satisfying given query (optional)
+  @count: (opts)->
+    @collection().count(opts.query, opts.callback)
+
+  @update : (opts)->
+    query    = opts.query
+    update   = opts.update
+    callback = opts.callback
+    options  = opts.options || {}
     
     @collection().update(query, update, options, callback)
-  
+
+  @insert : (opts)->
+    @collection().insert(opts.data, (error, docs)=>
+      if error
+        return opts.callback(error, null)
+
+      is_array = Type(docs, Array) 
+      
+      unless is_array
+        docs = [docs]
+
+      models = ((new @(doc)) for doc in docs)
+
+      result = if is_array
+        models
+      else
+        models[0]
+
+      opts.callback(null, result)
+    )
+
+  insert : (callback)->
+    @constructor.insert(
+      data     : @data()
+      callback : callback
+    )
+
   save: (callback)->
     if @beforeSave
       @beforeSave()
@@ -122,6 +161,29 @@ class Model extends DataModel
 
         callback(error, num_removed)
       )
+    )
+
+  reference : (attributes)->
+    unless Type(attributes, Array)
+      attributes = [attributes]
+
+    ref = {}
+
+    for attr in attributes
+      ref[attr] = @_dataPath(attr)
+
+    ref
+
+  @reference : (attributes)->
+    if attributes
+      unless Type(attributes, Array)
+        attributes = [attributes]
+    else
+      attributes = ['_id']
+
+    new Schema.Reference(
+      model      : @
+      attributes : attributes
     )
 
 module.exports = Model

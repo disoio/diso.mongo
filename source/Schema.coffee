@@ -27,13 +27,33 @@ class SchemaPrimitive extends SchemaBase
   isType : (obj)->
     Type(obj, @Type)
 
-class SchemaFloat extends SchemaPrimitive
+class SchemaBinary extends SchemaPrimitive
   constructor :()->
-    super(Number)
+    super(MongoDB.Binary)
+
+class SchemaBoolean extends SchemaPrimitive
+  constructor :()->
+    super(Boolean)
+
+class SchemaCode extends SchemaPrimitive
+  constructor :()->
+    super(MongoDB.Code)
+
+class SchemaDate extends SchemaPrimitive
+  constructor : ()->
+    super(Date)
+
+class SchemaDBRef extends SchemaPrimitive
+  constructor :()->
+    super(MongoDB.DBRef)
 
 class SchemaDouble extends SchemaPrimitive
   constructor :()->
     super(MongoDB.Double)
+
+class SchemaFloat extends SchemaPrimitive
+  constructor :()->
+    super(Number)
 
 class SchemaInteger extends SchemaPrimitive
   constructor :()->
@@ -43,29 +63,9 @@ class SchemaLong extends SchemaPrimitive
   constructor :()->
     super(MongoDB.Long)
 
-class SchemaDate extends SchemaPrimitive
-  constructor :()->
-    super(Date)
-
-class SchemaRegExp extends SchemaPrimitive
-  constructor :()->
-    super(RegExp)
-
-class SchemaString extends SchemaPrimitive
-  constructor :()->
-    super(String)
-
-class SchemaBoolean extends SchemaPrimitive
-  constructor :()->
-    super(Boolean)
-  
-class SchemaBinary extends SchemaPrimitive
-  constructor :()->
-    super(MongoDB.Binary)
-
-class SchemaCode extends SchemaPrimitive
-  constructor :()->
-    super(MongoDB.Code)
+class SchemaObject extends SchemaPrimitive
+  constructor : ()->
+    super(Object)
 
 class SchemaObjectID extends SchemaPrimitive
   constructor :()->
@@ -75,33 +75,33 @@ class SchemaObjectID extends SchemaPrimitive
   isType : (obj)->
     Type.string(obj) is 'ObjectID'
 
-class SchemaDBRef extends SchemaPrimitive
+class SchemaRegExp extends SchemaPrimitive
   constructor :()->
-    super(MongoDB.DBRef)
+    super(RegExp)
+
+class SchemaString extends SchemaPrimitive
+  constructor :()->
+    super(String)
 
 class SchemaSymbol extends SchemaPrimitive
   constructor :()->
     super(MongoDB.Symbol)
 
-class SchemaObject extends SchemaPrimitive
-  constructor : ()->
-    super(Object)
-
 _primitive_schemas = [
-  SchemaFloat,
-  SchemaDouble,
-  SchemaInteger,
-  SchemaLong,
-  SchemaDate,
-  SchemaRegExp,
-  SchemaString,
-  SchemaBoolean,
-  SchemaBinary,
-  SchemaCode,
-  SchemaObjectID,
-  SchemaDBRef,
-  SchemaSymbol,
+  SchemaBoolean
+  SchemaBinary
+  SchemaCode
+  SchemaDate
+  SchemaDBRef
+  SchemaDouble
+  SchemaFloat
+  SchemaInteger
+  SchemaLong
   SchemaObject
+  SchemaObjectID
+  SchemaRegExp
+  SchemaString
+  SchemaSymbol
 ]
 
 _schemaForPrimitiveType = (()->
@@ -119,6 +119,22 @@ _schemaForPrimitiveType = (()->
 )()
 
 
+class SchemaReference extends SchemaBase
+  constructor : (data)->
+    @Model      = data.model
+    @attributes = data.attributes
+
+  cast : (obj)->
+    unless Type.instance(obj, @Model)
+      try
+        obj = new @Model(obj)
+      catch error
+        console.error(error)
+        throw "Unable to create reference from object of type #{Type(obj)}"
+
+    obj.reference(@attributes)
+
+
 # Schema
 # ------------
 #
@@ -131,14 +147,20 @@ class Schema extends SchemaBase
 
     @Model  = opts.model
     schema  = opts.schema
-    options = opts.options
     
+    options = if ('options' of opts) 
+      opts.options
+    else
+      {}
+
     utils.rmerge(options, {
       strict : true
     })
+
     @strict = options.strict
-    
-    if (('_id' not in schema) and (options.add_id))
+    @add_id = options.add_id
+
+    if (('_id' not in schema) and @add_id)
       schema._id = SchemaObjectID
     
     @processed_schema = @_process(schema)
@@ -148,19 +170,20 @@ class Schema extends SchemaBase
     
     for attr, SchemaType of spec
       if Array.isArray(SchemaType)
-        # if schema value is an Array with no arguments 
-        # create an untyped array that doesn't cast
-        if (SchemaType.length is 0)
-          processed[attr] = new SchemaUntypedArray()
-          
-        # if schema value is Array with single value, assume 
-        # that value is the type, and cast using it
+        val = if (SchemaType.length is 0)
+          # if schema value is an Array with no arguments 
+          # create an untyped array that doesn't cast
+          new SchemaUntypedArray()
         else
+          # if schema value is Array with single value, assume 
+          # that value is the type, and cast using it
           SchemaType = this._processAtom(SchemaType[0])
           unless SchemaType
             throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
-          processed[attr] = new SchemaTypedArray(SchemaType)
-         
+          new SchemaTypedArray(SchemaType)
+        
+        processed[attr] = val
+
       else
         SchemaType = this._processAtom(SchemaType)
 
@@ -183,12 +206,15 @@ class Schema extends SchemaBase
     if PrimitiveSchemaType
       return (new PrimitiveSchemaType())
 
+    if Type(SchemaType, SchemaReference)
+      return SchemaType
+
     # if schema value is a descendant of Model, return a 
     # schema model that casts to that Model
     if Type.extension(SchemaType, BaseModel)
-      SchemaType._schema
-    else
-      null
+      return SchemaType._schema
+    
+    null
   
   isType : (obj)->
     Type(obj, @Model)
@@ -197,25 +223,30 @@ class Schema extends SchemaBase
     if @isType(obj)
       return obj
 
-    result = {}
+    data = {}
     
     for k, v of obj
-      schema = @processed_schema[k]
-            
-      if schema      
+      if @processed_schema.hasOwnProperty(k)
+        schema = @processed_schema[k]
+
         unless (schema instanceof SchemaBase)
-          throw new Error("diso.mongo.Schema: invalid schema for #{k}: #{schema}")
+          throw new Error("diso.mongo.Schema: Invalid schema for #{k}: #{schema}")
         
         try
-          result[k] = schema.cast(v)
+          data[k] = if Type(schema, Schema)
+            Model = schema.Model
+            new Model(v)
+          else
+            schema.cast(v)
+
         catch error
           throw new Error("diso.mongo.Schema: #{k}: #{error}")
                           
       else
-        unless @options.strict
-          result[k] = v
+        unless @strict
+          data[k] = v
     
-    result
+    data
 
   attribute : (path)->
     [first, rest] = utils.shiftPath(path)
@@ -235,11 +266,15 @@ class SchemaTypedArray extends SchemaBase
     unless Array.isArray(values)
       throw new Error("diso.mongo.Schema: Expecting array")
     
-    _Type = @Type
-    values.map((value)->
-      unless _Type.isType(value)
-        value = _Type.cast(value)
-      value
+    values.map((value)=>
+      unless @Type.isType(value)
+        if Type(@Type, Schema)
+          Model = @Type.Model
+          new Model(value)
+        else
+          @Type.cast(value)
+      else
+        value
     )
   
   # TODO : should test type of the subelements?
@@ -277,18 +312,7 @@ class SchemaUntypedArray extends SchemaBase
       throw new Error("diso.mongo.Schema: Missing array index")
     else
       null
-
-
-class SchemaReference extends SchemaBase
-  constructor : (data)->
-    @Model      = data.Model
-    @attributes = data.attributes
-
-  cast : (obj)->
-    unless isModel(obj)
-      obj = new @Model(obj)
-
-    obj.reference(@attributes)
+      
     
 Schema.Reference = SchemaReference
 

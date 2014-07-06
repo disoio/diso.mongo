@@ -5,8 +5,10 @@ PATH_SEPARATOR = '.'
 module.exports = {
   rmerge : (original, merge)->
     for k,v of merge
-      unless k in original
+      unless k of original
         original[k] = v
+        
+    original
 
   omit : (object, keys)->
     unless Type(keys, Array)

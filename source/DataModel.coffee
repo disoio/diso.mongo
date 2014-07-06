@@ -1,4 +1,5 @@
-Type = require('type-of-is')
+Type    = require('type-of-is')
+MongoDB = require('mongodb')
 
 BaseModel = require('./BaseModel') 
 Schema    = require('./Schema')
@@ -6,6 +7,9 @@ utils     = require('./utils')
 
 class DataModel extends BaseModel
   constructor: (data)->
+    if (data and @constructor.add_id and (!('_id' of data)))
+      data._id = new MongoDB.ObjectID()
+
     @_data = @constructor.cast(data)
 
   @schema : (schema)->
@@ -46,13 +50,13 @@ class DataModel extends BaseModel
     unless @attributeExists(attr)
       throw new Error("diso.mongo.Model: Missing attribute: #{attr}")
 
-  toJSON : ()->
+  _map : (include_$model)->
     getData = (v)->
       if Type.instance(v, BaseModel)
-        v.toJSON()
+        v._map(include_$model)
       else
         v
-    
+
     result = {}
     for k,v of @_data
       result[k] = if Type(v, Array)
@@ -60,14 +64,38 @@ class DataModel extends BaseModel
       else
         getData(v)
 
+    if include_$model
+      result.$model = @constructor.name
+
     result
+
+  @deflate : (obj)->
+    switch Type(obj)
+      when Array
+        obj.map(@deflate)
+
+      when Object
+        res = {}
+        for k,v of obj
+          res[k] = @deflate(v) 
+        res
+
+      else
+        if Type.instance(obj, BaseModel)
+          obj.deflate()
+        else
+          obj
+
+  deflate : ()->
+    @_map(true)
   
   # multi-purpose accessor for this model's underlying data
   data: (args...)->
     # Full read
     # calling with no arguments returns the complete, underlying data object
     if (args.length is 0)
-      return @toJSON()
+      return @_map(false)
+
 
     if (args.length is 1)
       arg = args[0]
@@ -89,20 +117,17 @@ class DataModel extends BaseModel
 
         # write
         when Object
-          @_dataAdd(arg)
+          for k,v of arg
+            @_dataPath(k, v)
           return this
 
     if (args.length is 2)
       # Attribute write
       # treat two arguments as a write of the given attribute
-      return this._dataPath(args[0], args[1])
+      this._dataPath(args[0], args[1])
+      return this
 
     throw new Error("diso.mongo.Model: Invalid argument to .data")
-
-  _dataAdd: (data_obj)-> 
-    # pass data_obj through this model's schema and extend the underlying data object with result
-    cast_obj = @constructor.cast(data_obj)
-    
     
   _dataPath: (path, value = null)->
     unless Type(path, String)
@@ -139,36 +164,15 @@ class DataModel extends BaseModel
 
       return data
 
-  set: (attribute, value)->
-    @_dataPath(attribute, value)
+  # Alias for .data(path, value)
+  set: (path, value)->
+    @_dataPath(path, value)
 
-  get: (attribute)->
-    @_dataPath(attribute)
+  # Alias for .data(path)
+  get: (path)->
+    @_dataPath(path)
 
   validate: ()->
     return null
-
-  reference : (attributes)->
-    unless Type(attributes, Array)
-      attributes = [attributes]
-
-    ref = {
-      type : @constructor.name
-    }
-
-    for attr in attributes
-      ref[attr] = @_dataPath(attr)
-
-  @reference : (attributes)->
-    if attributes
-      unless Type(attributes, Array)
-        attributes = [attributes]
-    else
-      throw new Error("diso.mongo.Model: Must pass attributes to Model.reference")
-
-    new Schema.Reference(
-      Model      : @
-      attributes : attributes
-    )
 
 module.exports = DataModel

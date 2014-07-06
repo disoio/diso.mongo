@@ -13,12 +13,15 @@
 #     
 # setConfig = (new_config)->
 #   config = new_config
+
+MongoDB = require('mongodb')
   
   
 module.exports = {
   Schema        : require('./Schema')
   Model         : require('./Model')
   EmbeddedModel : require('./EmbeddedModel')
+  ObjectID      : MongoDB.ObjectID
   
   haveYouSeenMyBaseball : ()->
     false
