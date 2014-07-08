@@ -163,10 +163,6 @@ class DataModel extends BaseModel
       for part in parts
         data = data[part]
 
-        # TODO: remove this
-        if (data instanceof BaseModel)
-          data = data._data
-
       data[last] = if schema
         schema.cast(value)
       else
@@ -178,10 +174,6 @@ class DataModel extends BaseModel
 
       for part in parts
         data = data[part]
-
-        # TODO: remove this.
-        if (data instanceof BaseModel)
-          data = data._data
 
       return data
 

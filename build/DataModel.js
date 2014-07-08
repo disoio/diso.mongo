@@ -182,9 +182,6 @@
         for (_i = 0, _len = parts.length; _i < _len; _i++) {
           part = parts[_i];
           data = data[part];
-          if (data instanceof BaseModel) {
-            data = data._data;
-          }
         }
         return data[last] = schema ? schema.cast(value) : value;
       } else {
@@ -192,9 +189,6 @@
         for (_j = 0, _len1 = parts.length; _j < _len1; _j++) {
           part = parts[_j];
           data = data[part];
-          if (data instanceof BaseModel) {
-            data = data._data;
-          }
         }
         return data;
       }
