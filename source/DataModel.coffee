@@ -6,20 +6,13 @@ Schema    = require('./Schema')
 utils     = require('./utils')
 
 class DataModel extends BaseModel
-  constructor: (data)->
-    if (data and @constructor.add_id and (!('_id' of data)))
-      data._id = new MongoDB.ObjectID()
-
+  constructor: (data)->      
     @_data = @constructor.cast(data)
 
   @schema : (schema)->
     @_schema = new Schema({
       schema  : schema
       model   : @
-      options : {
-        add_id : @add_id
-        strict : @strict
-      }
     })
 
     for k,v of schema
@@ -32,10 +25,34 @@ class DataModel extends BaseModel
             @_dataPath(k, val)
         })
 
+    @id_has_alias = (('_id' of schema) and schema._id.alias)
+
+    if @id_has_alias
+      alias = schema._id.alias
+
+      Object.defineProperty(@prototype, alias, {
+        get : ()->
+          @_data._id
+
+        set : (val)->
+          @_dataPath('_id', val)
+      })
+
+    @_schema
+
   # Cast data via model's schema
   @cast: (data)->
     unless @_schema
       throw new Error("diso.mongo.Model: @schema has not been defined for #{@name}")
+    
+    # if the id has an alias, we set _id from it and then 
+    # delete the alias from the data so it isn't duped
+    if @id_has_alias
+      id_alias = @schema._id.alias
+      if (alias of data)
+        data._id = data[alias]
+        delete data[alias]
+
     @_schema.cast(data)
 
   # check whether this model's schema defines an attribute with the given path
@@ -145,6 +162,8 @@ class DataModel extends BaseModel
 
       for part in parts
         data = data[part]
+
+        # TODO: remove this
         if (data instanceof BaseModel)
           data = data._data
 
@@ -159,6 +178,8 @@ class DataModel extends BaseModel
 
       for part in parts
         data = data[part]
+
+        # TODO: remove this.
         if (data instanceof BaseModel)
           data = data._data
 

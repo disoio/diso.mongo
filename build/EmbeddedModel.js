@@ -12,10 +12,6 @@
       return EmbeddedModel.__super__.constructor.apply(this, arguments);
     }
 
-    EmbeddedModel.strict = false;
-
-    EmbeddedModel.add_id = false;
-
     return EmbeddedModel;
 
   })(DataModel);

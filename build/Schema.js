@@ -1,7 +1,8 @@
 (function() {
-  var BaseModel, MongoDB, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntypedArray, Type, primitive, utils, _i, _len, _primitive_schemas, _schemaForPrimitiveType,
+  var BaseModel, MongoDB, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaID, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntyped, SchemaUntypedArray, Type, makeSchemaID, primitive, utils, _i, _len, _primitive_schemas, _schemaForPrimitiveType,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   MongoDB = require('mongodb');
@@ -13,35 +14,114 @@
   utils = require('./utils');
 
   SchemaBase = (function() {
-    function SchemaBase() {}
+    SchemaBase.prototype.Type = null;
+
+    function SchemaBase(Type) {
+      if (Type) {
+        this.Type = Type;
+      }
+    }
 
     SchemaBase.prototype.attribute = function(path) {
       return null;
     };
 
-    return SchemaBase;
+    SchemaBase.prototype.isType = function(obj) {
+      if (this.Type) {
+        return Type(obj, this.Type);
+      } else {
+        return true;
+      }
+    };
 
-  })();
-
-  SchemaPrimitive = (function(_super) {
-    __extends(SchemaPrimitive, _super);
-
-    function SchemaPrimitive(Type) {
-      this.Type = Type;
-      SchemaPrimitive.__super__.constructor.call(this);
-    }
-
-    SchemaPrimitive.prototype.cast = function(obj) {
-      if (this.isType(obj) || (obj === null) || (obj === void 0)) {
+    SchemaBase.prototype.cast = function(obj) {
+      if (!this.Type) {
+        return obj;
+      }
+      if ((obj === null) || (obj === void 0)) {
+        return null;
+      }
+      if (this.isType(obj)) {
         return obj;
       } else {
         return new this.Type(obj);
       }
     };
 
-    SchemaPrimitive.prototype.isType = function(obj) {
-      return Type(obj, this.Type);
+    return SchemaBase;
+
+  })();
+
+  SchemaID = (function(_super) {
+    __extends(SchemaID, _super);
+
+    function SchemaID() {
+      return SchemaID.__super__.constructor.apply(this, arguments);
+    }
+
+    SchemaID.prototype.auto = false;
+
+    SchemaID.prototype.alias = null;
+
+    SchemaID.prototype.generate = function() {
+      throw new Error("Must define generate method from SchemaID");
     };
+
+    return SchemaID;
+
+  })(SchemaBase);
+
+  makeSchemaID = function(opts) {
+    var S;
+    S = (function(_super) {
+      __extends(_Class, _super);
+
+      function _Class() {
+        return _Class.__super__.constructor.apply(this, arguments);
+      }
+
+      return _Class;
+
+    })(SchemaID);
+    S.prototype.Type = opts.type;
+    if ('alias' in opts) {
+      S.prototype.alias = opts.alias;
+    }
+    S.prototype.auto = 'gen' in opts ? (S.prototype.generate = opts.gen, true) : false;
+    return S;
+  };
+
+  makeSchemaID.Base = SchemaID;
+
+  SchemaObjectID = (function(_super) {
+    __extends(SchemaObjectID, _super);
+
+    function SchemaObjectID() {
+      return SchemaObjectID.__super__.constructor.apply(this, arguments);
+    }
+
+    SchemaObjectID.prototype.Type = MongoDB.ObjectID;
+
+    SchemaObjectID.prototype.auto = true;
+
+    SchemaObjectID.prototype.generate = function() {
+      return new MongoDB.ObjectID();
+    };
+
+    SchemaObjectID.prototype.isType = function(obj) {
+      return Type.string(obj) === 'ObjectID';
+    };
+
+    return SchemaObjectID;
+
+  })(SchemaID);
+
+  SchemaPrimitive = (function(_super) {
+    __extends(SchemaPrimitive, _super);
+
+    function SchemaPrimitive() {
+      return SchemaPrimitive.__super__.constructor.apply(this, arguments);
+    }
 
     return SchemaPrimitive;
 
@@ -157,21 +237,6 @@
 
   })(SchemaPrimitive);
 
-  SchemaObjectID = (function(_super) {
-    __extends(SchemaObjectID, _super);
-
-    function SchemaObjectID() {
-      SchemaObjectID.__super__.constructor.call(this, MongoDB.ObjectID);
-    }
-
-    SchemaObjectID.prototype.isType = function(obj) {
-      return Type.string(obj) === 'ObjectID';
-    };
-
-    return SchemaObjectID;
-
-  })(SchemaPrimitive);
-
   SchemaRegExp = (function(_super) {
     __extends(SchemaRegExp, _super);
 
@@ -205,7 +270,18 @@
 
   })(SchemaPrimitive);
 
-  _primitive_schemas = [SchemaBoolean, SchemaBinary, SchemaCode, SchemaDate, SchemaDBRef, SchemaDouble, SchemaFloat, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaRegExp, SchemaString, SchemaSymbol];
+  SchemaUntyped = (function(_super) {
+    __extends(SchemaUntyped, _super);
+
+    function SchemaUntyped() {
+      return SchemaUntyped.__super__.constructor.apply(this, arguments);
+    }
+
+    return SchemaUntyped;
+
+  })(SchemaPrimitive);
+
+  _primitive_schemas = [SchemaBoolean, SchemaBinary, SchemaCode, SchemaDate, SchemaDBRef, SchemaDouble, SchemaFloat, SchemaInteger, SchemaLong, SchemaObject, SchemaRegExp, SchemaString, SchemaSymbol, SchemaUntyped];
 
   _schemaForPrimitiveType = (function() {
     var _primitive_types;
@@ -255,57 +331,57 @@
     __extends(Schema, _super);
 
     function Schema(opts) {
-      var options, schema;
+      this.cast = __bind(this.cast, this);
+      var schema;
       Schema.__super__.constructor.call(this);
-      this.Model = opts.model;
       schema = opts.schema;
-      options = 'options' in opts ? opts.options : {};
-      utils.rmerge(options, {
-        strict: true
-      });
-      this.strict = options.strict;
-      this.add_id = options.add_id;
-      if ((__indexOf.call(schema, '_id') < 0) && this.add_id) {
-        schema._id = SchemaObjectID;
-      }
+      this.Model = opts.model;
       this.processed_schema = this._process(schema);
     }
 
+    Schema.prototype._config = {
+      strict: false
+    };
+
+    Schema.prototype.config = function(opts) {
+      var k, msg, v, valid_attrs, _results;
+      _results = [];
+      for (k in opts) {
+        v = opts[k];
+        if (!(k in this._config)) {
+          valid_attrs = Object.keys(this._config).join(', ');
+          msg = "Invalid config attribute: " + k + ". Valid attributes are " + valid_attrs;
+          throw new Error(msg);
+        }
+        _results.push(this._config[k] = v);
+      }
+      return _results;
+    };
+
     Schema.prototype._process = function(spec) {
-      var SchemaType, attr, processed, val;
+      var SchemaType, attr, processed, schema, _throwError;
       processed = {};
+      _throwError = function(attr) {
+        throw new Error("diso.mongo.Schema: Invalid schema type for field: " + attr);
+      };
       for (attr in spec) {
         SchemaType = spec[attr];
-        if (Array.isArray(SchemaType)) {
-          val = (function() {
-            if (SchemaType.length === 0) {
-              return new SchemaUntypedArray();
-            } else {
-              SchemaType = this._processAtom(SchemaType[0]);
-              if (!SchemaType) {
-                throw new Error("diso.mongo.Schema: Invalid schema type for field: " + attr);
-              }
-              return new SchemaTypedArray(SchemaType);
-            }
-          }).call(this);
-          processed[attr] = val;
-        } else {
-          SchemaType = this._processAtom(SchemaType);
-          if (!SchemaType) {
-            throw new Error("diso.mongo.Schema: Invalid schema type for field: " + attr);
-          }
-          processed[attr] = SchemaType;
+        if (!SchemaType) {
+          _throwError(attr);
         }
+        processed[attr] = Array.isArray(SchemaType) ? SchemaType.length === 0 ? new SchemaUntypedArray() : (SchemaType = this._processAtom(SchemaType[0]), !SchemaType ? _throwError(attr) : void 0, new SchemaTypedArray(SchemaType)) : (schema = this._processAtom(SchemaType), !schema ? _throwError(attr) : void 0, schema);
       }
       return processed;
     };
 
     Schema.prototype._processAtom = function(SchemaType) {
-      var PrimitiveSchemaType;
+      var PrimitiveSchemaType, is_primitive, is_schema_id;
       if (SchemaType === void 0) {
         return null;
       }
-      if ((__indexOf.call(_primitive_schemas, SchemaType) >= 0)) {
+      is_primitive = (__indexOf.call(_primitive_schemas, SchemaType) >= 0);
+      is_schema_id = Type.extension(SchemaType, SchemaID);
+      if (is_primitive || is_schema_id) {
         return new SchemaType();
       }
       PrimitiveSchemaType = _schemaForPrimitiveType(SchemaType);
@@ -326,7 +402,7 @@
     };
 
     Schema.prototype.cast = function(obj) {
-      var Model, data, error, k, schema, v;
+      var Model, data, error, id, k, schema, v;
       if (this.isType(obj)) {
         return obj;
       }
@@ -345,9 +421,15 @@
             throw new Error("diso.mongo.Schema: " + k + ": " + error);
           }
         } else {
-          if (!this.strict) {
+          if (!this._config.strict) {
             data[k] = v;
           }
+        }
+      }
+      if ('_id' in this.processed_schema) {
+        id = this.processed_schema._id;
+        if (id.auto && (!('_id' in data))) {
+          data._id = id.generate(data);
         }
       }
       return data;
@@ -453,6 +535,18 @@
   })(SchemaBase);
 
   Schema.Reference = SchemaReference;
+
+  Schema.ObjectID = SchemaObjectID;
+
+  Schema.ID = makeSchemaID;
+
+  Schema.Primitive = SchemaPrimitive;
+
+  Schema.Base = SchemaBase;
+
+  Schema.TypedArray = SchemaTypedArray;
+
+  Schema.UntypedArray = SchemaUntypedArray;
 
   for (_i = 0, _len = _primitive_schemas.length; _i < _len; _i++) {
     primitive = _primitive_schemas[_i];

@@ -18,44 +18,57 @@
     __extends(DataModel, _super);
 
     function DataModel(data) {
-      if (data && this.constructor.add_id && (!('_id' in data))) {
-        data._id = new MongoDB.ObjectID();
-      }
       this._data = this.constructor.cast(data);
     }
 
     DataModel.schema = function(schema) {
-      var k, v, _results;
+      var alias, k, v, _fn;
       this._schema = new Schema({
         schema: schema,
-        model: this,
-        options: {
-          add_id: this.add_id,
-          strict: this.strict
-        }
+        model: this
       });
-      _results = [];
+      _fn = (function(_this) {
+        return function(k) {
+          return Object.defineProperty(_this.prototype, k, {
+            get: function() {
+              return this._data[k];
+            },
+            set: function(val) {
+              return this._dataPath(k, val);
+            }
+          });
+        };
+      })(this);
       for (k in schema) {
         v = schema[k];
-        _results.push((function(_this) {
-          return function(k) {
-            return Object.defineProperty(_this.prototype, k, {
-              get: function() {
-                return this._data[k];
-              },
-              set: function(val) {
-                return this._dataPath(k, val);
-              }
-            });
-          };
-        })(this)(k));
+        _fn(k);
       }
-      return _results;
+      this.id_has_alias = ('_id' in schema) && schema._id.alias;
+      if (this.id_has_alias) {
+        alias = schema._id.alias;
+        Object.defineProperty(this.prototype, alias, {
+          get: function() {
+            return this._data._id;
+          },
+          set: function(val) {
+            return this._dataPath('_id', val);
+          }
+        });
+      }
+      return this._schema;
     };
 
     DataModel.cast = function(data) {
+      var id_alias;
       if (!this._schema) {
         throw new Error("diso.mongo.Model: @schema has not been defined for " + this.name);
+      }
+      if (this.id_has_alias) {
+        id_alias = this.schema._id.alias;
+        if (alias in data) {
+          data._id = data[alias];
+          delete data[alias];
+        }
       }
       return this._schema.cast(data);
     };

@@ -24,9 +24,14 @@
 
     Model.db_url = null;
 
-    Model.strict = false;
+    Model.collection_name = null;
 
-    Model.add_id = true;
+    Model.schema = function(schema) {
+      if (!('_id' in schema)) {
+        schema._id = Schema.ObjectID;
+      }
+      return Model.__super__.constructor.schema.call(this, schema);
+    };
 
     Model.collection = function(name) {
       var collection_name, db, _ref;
@@ -39,6 +44,7 @@
       var id;
       if ('id' in opts) {
         id = opts.id;
+        delete opts.id;
         if (Type(id, String)) {
           id = new MongoDB.ObjectID(id);
         }
@@ -106,7 +112,7 @@
     };
 
     Model.count = function(opts) {
-      return this.collection().count(opts.query, opts.callback);
+      return this.collection().count(opts.query || {}, opts.callback);
     };
 
     Model.update = function(opts) {

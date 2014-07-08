@@ -6,15 +6,26 @@ DataModel = require('./DataModel')
 Schema    = require('./Schema')
 utils     = require('./utils')
 
-class Model extends DataModel  
+class Model extends DataModel
+  # required, mongodb url for db
   @db_url : null
-  @strict : false
-  @add_id : true
-      
+
+  # optional, otherwise collection will be underscorized 
+  # child class/constructor name
+  @collection_name : null
+
+  @schema : (schema)->
+    # Ensure that schema has an _id attribute
+    unless ('_id' of schema)
+      schema._id = Schema.ObjectID
+
+    super(schema)
+
+  # Class method for accessing the backing mongodb collection
   @collection: (name)->
     # @db_url, @collection_name defined in child
     # @db_url is required
-    # @collection_name defaults to underscorized child class name
+    # defaults to underscorized child class name
     
     collection_name = if name
       name
@@ -23,12 +34,13 @@ class Model extends DataModel
     
     db = MongoJS(@db_url)
     db.collection(collection_name)
-    
   
   # Find an instance of this model, given criteria
   @find: (opts)->
     if ('id' of opts)
       id = opts.id
+      delete opts.id
+
       if Type(id, String)
         id = new MongoDB.ObjectID(id)
 
@@ -82,7 +94,7 @@ class Model extends DataModel
 
   # find the count of instances satisfying given query (optional)
   @count: (opts)->
-    @collection().count(opts.query, opts.callback)
+    @collection().count(opts.query || {}, opts.callback)
 
   @update : (opts)->
     query    = opts.query

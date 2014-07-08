@@ -5,8 +5,68 @@ BaseModel = require('./BaseModel')
 utils     = require('./utils')
 
 class SchemaBase
+  Type : null
+
+  constructor : (Type)->
+    if Type
+      @Type = Type
+
   attribute : (path)->
     null
+
+  isType : (obj)->
+    if @Type
+      Type(obj, @Type)
+    else
+      true
+
+  cast : (obj)->
+    unless @Type
+      return obj
+
+    if ((obj is null) or (obj is undefined))
+      return null
+
+    if (@isType(obj))
+      obj
+    else
+      new @Type(obj)
+      
+
+class SchemaID extends SchemaBase
+  auto  : false
+  alias : null
+
+  generate : ()->
+    throw new Error("Must define generate method from SchemaID")
+
+makeSchemaID = (opts)->
+  S = class extends SchemaID
+
+  S.prototype.Type  = opts.type
+  if ('alias' of opts)
+    S.prototype.alias = opts.alias
+  
+  S.prototype.auto = if ('gen' of opts)
+    S.prototype.generate = opts.gen
+    true
+  else
+    false
+
+  S
+
+makeSchemaID.Base = SchemaID
+
+class SchemaObjectID extends SchemaID
+  Type : MongoDB.ObjectID
+  auto : true
+
+  generate : ()->
+    new MongoDB.ObjectID()
+
+  # hack temp
+  isType : (obj)->
+    Type.string(obj) is 'ObjectID'
 
 # SchemaPrimitive
 # ---------------
@@ -15,17 +75,6 @@ class SchemaBase
 # These get exported on SchemaObject class
 
 class SchemaPrimitive extends SchemaBase
-  constructor : (@Type)->
-    super()
-    
-  cast : (obj)->
-    if (@isType(obj) or (obj is null) or (obj is undefined))
-      obj
-    else
-      new @Type(obj)
-  
-  isType : (obj)->
-    Type(obj, @Type)
 
 class SchemaBinary extends SchemaPrimitive
   constructor :()->
@@ -67,14 +116,6 @@ class SchemaObject extends SchemaPrimitive
   constructor : ()->
     super(Object)
 
-class SchemaObjectID extends SchemaPrimitive
-  constructor :()->
-    super(MongoDB.ObjectID)
-
-  # temp fix.. 
-  isType : (obj)->
-    Type.string(obj) is 'ObjectID'
-
 class SchemaRegExp extends SchemaPrimitive
   constructor :()->
     super(RegExp)
@@ -87,6 +128,8 @@ class SchemaSymbol extends SchemaPrimitive
   constructor :()->
     super(MongoDB.Symbol)
 
+class SchemaUntyped extends SchemaPrimitive
+
 _primitive_schemas = [
   SchemaBoolean
   SchemaBinary
@@ -98,10 +141,10 @@ _primitive_schemas = [
   SchemaInteger
   SchemaLong
   SchemaObject
-  SchemaObjectID
   SchemaRegExp
   SchemaString
   SchemaSymbol
+  SchemaUntyped
 ]
 
 _schemaForPrimitiveType = (()->
@@ -141,56 +184,59 @@ class SchemaReference extends SchemaBase
 # this is the object that gets exported and whose
 # constructor gets called via Model
 
-class Schema extends SchemaBase
+class Schema extends SchemaBase  
   constructor : (opts)->
     super()
 
-    @Model  = opts.model
-    schema  = opts.schema
-    
-    options = if ('options' of opts) 
-      opts.options
-    else
-      {}
+    schema   = opts.schema
+    @Model   = opts.model
 
-    utils.rmerge(options, {
-      strict : true
-    })
-
-    @strict = options.strict
-    @add_id = options.add_id
-
-    if (('_id' not in schema) and @add_id)
-      schema._id = SchemaObjectID
-    
     @processed_schema = @_process(schema)
+
+  _config : {
+    strict : false
+  }
+
+  config : (opts)->
+    for k,v of opts
+      unless (k of @_config)
+        valid_attrs = Object.keys(@_config).join(', ')
+        msg = "Invalid config attribute: #{k}. Valid attributes are #{valid_attrs}"
+        throw new Error(msg)
+
+      @_config[k] = v
 
   _process : (spec)->
     processed = {}
+
+    _throwError = (attr)->
+      throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
     
     for attr, SchemaType of spec
-      if Array.isArray(SchemaType)
-        val = if (SchemaType.length is 0)
+      unless SchemaType
+        _throwError(attr)
+
+      processed[attr] = if Array.isArray(SchemaType)
+        if (SchemaType.length is 0)
           # if schema value is an Array with no arguments 
           # create an untyped array that doesn't cast
           new SchemaUntypedArray()
+        
         else
           # if schema value is Array with single value, assume 
           # that value is the type, and cast using it
-          SchemaType = this._processAtom(SchemaType[0])
+          SchemaType = @_processAtom(SchemaType[0])
           unless SchemaType
-            throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
-          new SchemaTypedArray(SchemaType)
-        
-        processed[attr] = val
-
+            _throwError(attr)
+          new SchemaTypedArray(SchemaType)  
+      
       else
-        SchemaType = this._processAtom(SchemaType)
+        schema = @_processAtom(SchemaType)
 
-        unless SchemaType
-          throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
-        
-        processed[attr] = SchemaType
+        unless schema
+          _throwError(attr)
+
+        schema
     
     processed
   
@@ -198,8 +244,10 @@ class Schema extends SchemaBase
   _processAtom : (SchemaType)->
     if (SchemaType is undefined) 
       return null
-     
-    if (SchemaType in _primitive_schemas)
+    
+    is_primitive = (SchemaType in _primitive_schemas)
+    is_schema_id = Type.extension(SchemaType, SchemaID)
+    if (is_primitive or is_schema_id)
       return (new SchemaType())
 
     PrimitiveSchemaType = _schemaForPrimitiveType(SchemaType)
@@ -219,7 +267,7 @@ class Schema extends SchemaBase
   isType : (obj)->
     Type(obj, @Model)
 
-  cast : (obj)->
+  cast : (obj)=>
     if @isType(obj)
       return obj
 
@@ -243,9 +291,15 @@ class Schema extends SchemaBase
           throw new Error("diso.mongo.Schema: #{k}: #{error}")
                           
       else
-        unless @strict
+        unless @_config.strict
           data[k] = v
     
+    if ('_id' of @processed_schema)
+      id = @processed_schema._id
+
+      if (id.auto and (!('_id' of data)))
+        data._id = id.generate(data)
+
     data
 
   attribute : (path)->
@@ -312,9 +366,15 @@ class SchemaUntypedArray extends SchemaBase
       throw new Error("diso.mongo.Schema: Missing array index")
     else
       null
-      
-    
-Schema.Reference = SchemaReference
+
+
+Schema.Reference    = SchemaReference
+Schema.ObjectID     = SchemaObjectID
+Schema.ID           = makeSchemaID
+Schema.Primitive    = SchemaPrimitive
+Schema.Base         = SchemaBase
+Schema.TypedArray   = SchemaTypedArray
+Schema.UntypedArray = SchemaUntypedArray
 
 # attach the primitive schemas to Schemas
 for primitive in _primitive_schemas

@@ -7,7 +7,6 @@ Model         = Mongo.Model
 EmbeddedModel = Mongo.EmbeddedModel
 Schema        = Mongo.Schema
 
-
 class Food extends EmbeddedModel
   @schema({
     name : Schema.String
