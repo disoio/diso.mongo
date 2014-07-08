@@ -1,9 +1,9 @@
 (function() {
-  var BaseModel, MongoDB, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaID, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntyped, SchemaUntypedArray, Type, makeSchemaID, primitive, utils, _i, _len, _primitive_schemas, _schemaForPrimitiveType,
+  var BaseModel, MongoDB, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaID, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntyped, SchemaUntypedArray, Type, makeSchemaID, primitive, throwError, utils, _checkPrimitiveSchemaType, _i, _len, _primitive_schemas, _schemaTypeForPrimitive,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   MongoDB = require('mongodb');
 
@@ -13,12 +13,17 @@
 
   utils = require('./utils');
 
+  throwError = function(msg) {
+    msg = "diso.mongo.Schema: " + msg;
+    throw new Error(msg);
+  };
+
   SchemaBase = (function() {
     SchemaBase.prototype.Type = null;
 
-    function SchemaBase(Type) {
-      if (Type) {
-        this.Type = Type;
+    function SchemaBase(type) {
+      if (type) {
+        this.Type = type;
       }
     }
 
@@ -64,7 +69,7 @@
     SchemaID.prototype.alias = null;
 
     SchemaID.prototype.generate = function() {
-      throw new Error("Must define generate method from SchemaID");
+      return throwError("Must define generate method from SchemaID");
     };
 
     return SchemaID;
@@ -72,7 +77,7 @@
   })(SchemaBase);
 
   makeSchemaID = function(opts) {
-    var S;
+    var PrimitiveSchemaType, S;
     S = (function(_super) {
       __extends(_Class, _super);
 
@@ -83,7 +88,12 @@
       return _Class;
 
     })(SchemaID);
-    S.prototype.Type = opts.type;
+    PrimitiveSchemaType = _checkPrimitiveSchemaType(opts.type);
+    if (PrimitiveSchemaType) {
+      S.prototype.Type = new PrimitiveSchemaType().Type;
+    } else {
+      throwError("SchemaID type must be a Schema Primitive");
+    }
     if ('alias' in opts) {
       S.prototype.alias = opts.alias;
     }
@@ -200,6 +210,10 @@
       SchemaFloat.__super__.constructor.call(this, Number);
     }
 
+    SchemaFloat.prototype.cast = function(obj) {
+      return parseFloat(obj);
+    };
+
     return SchemaFloat;
 
   })(SchemaPrimitive);
@@ -210,6 +224,10 @@
     function SchemaInteger() {
       SchemaInteger.__super__.constructor.call(this, Number);
     }
+
+    SchemaInteger.prototype.cast = function(obj) {
+      return parseInt(obj);
+    };
 
     return SchemaInteger;
 
@@ -283,7 +301,7 @@
 
   _primitive_schemas = [SchemaBoolean, SchemaBinary, SchemaCode, SchemaDate, SchemaDBRef, SchemaDouble, SchemaFloat, SchemaInteger, SchemaLong, SchemaObject, SchemaRegExp, SchemaString, SchemaSymbol, SchemaUntyped];
 
-  _schemaForPrimitiveType = (function() {
+  _schemaTypeForPrimitive = (function() {
     var _primitive_types;
     _primitive_types = _primitive_schemas.map(function(PS) {
       var ps;
@@ -301,6 +319,19 @@
     };
   })();
 
+  _checkPrimitiveSchemaType = function(SchemaType) {
+    var PrimitiveSchemaType;
+    if ((__indexOf.call(_primitive_schemas, SchemaType) >= 0)) {
+      return SchemaType;
+    }
+    PrimitiveSchemaType = _schemaTypeForPrimitive(SchemaType);
+    if (PrimitiveSchemaType) {
+      return PrimitiveSchemaType;
+    } else {
+      return null;
+    }
+  };
+
   SchemaReference = (function(_super) {
     __extends(SchemaReference, _super);
 
@@ -316,8 +347,7 @@
           obj = new this.Model(obj);
         } catch (_error) {
           error = _error;
-          console.error(error);
-          throw "Unable to create reference from object of type " + (Type(obj));
+          throwError("Unable to create reference from object of type " + (Type(obj)));
         }
       }
       return obj.reference(this.attributes);
@@ -351,7 +381,7 @@
         if (!(k in this._config)) {
           valid_attrs = Object.keys(this._config).join(', ');
           msg = "Invalid config attribute: " + k + ". Valid attributes are " + valid_attrs;
-          throw new Error(msg);
+          throwError(msg);
         }
         _results.push(this._config[k] = v);
       }
@@ -362,7 +392,7 @@
       var SchemaType, attr, processed, schema, _throwError;
       processed = {};
       _throwError = function(attr) {
-        throw new Error("diso.mongo.Schema: Invalid schema type for field: " + attr);
+        return throwError("Invalid schema type for field: " + attr);
       };
       for (attr in spec) {
         SchemaType = spec[attr];
@@ -375,26 +405,23 @@
     };
 
     Schema.prototype._processAtom = function(SchemaType) {
-      var PrimitiveSchemaType, is_primitive, is_schema_id;
+      var PrimitiveType;
       if (SchemaType === void 0) {
         return null;
-      }
-      is_primitive = (__indexOf.call(_primitive_schemas, SchemaType) >= 0);
-      is_schema_id = Type.extension(SchemaType, SchemaID);
-      if (is_primitive || is_schema_id) {
-        return new SchemaType();
-      }
-      PrimitiveSchemaType = _schemaForPrimitiveType(SchemaType);
-      if (PrimitiveSchemaType) {
-        return new PrimitiveSchemaType();
-      }
-      if (Type(SchemaType, SchemaReference)) {
+      } else if (Type(SchemaType, SchemaReference)) {
         return SchemaType;
-      }
-      if (Type.extension(SchemaType, BaseModel)) {
+      } else if (Type.extension(SchemaType, SchemaID)) {
+        return new SchemaType();
+      } else if (Type.extension(SchemaType, BaseModel)) {
         return SchemaType._schema;
+      } else {
+        PrimitiveType = _checkPrimitiveSchemaType(SchemaType);
+        if (PrimitiveType) {
+          return new PrimitiveType();
+        } else {
+          return null;
+        }
       }
-      return null;
     };
 
     Schema.prototype.isType = function(obj) {
@@ -412,13 +439,13 @@
         if (this.processed_schema.hasOwnProperty(k)) {
           schema = this.processed_schema[k];
           if (!(schema instanceof SchemaBase)) {
-            throw new Error("diso.mongo.Schema: Invalid schema for " + k + ": " + schema);
+            throwError("Invalid schema for " + k + ": " + schema);
           }
           try {
             data[k] = Type(schema, Schema) ? (Model = schema.Model, new Model(v)) : schema.cast(v);
           } catch (_error) {
             error = _error;
-            throw new Error("diso.mongo.Schema: " + k + ": " + error);
+            throwError("" + k + ": " + error);
           }
         } else {
           if (!this._config.strict) {
@@ -460,7 +487,7 @@
 
     SchemaTypedArray.prototype.cast = function(values) {
       if (!Array.isArray(values)) {
-        throw new Error("diso.mongo.Schema: Expecting array");
+        throwError("Expecting array");
       }
       return values.map((function(_this) {
         return function(value) {
@@ -488,7 +515,7 @@
       parts = utils.splitPath(path);
       first = parts.shift();
       if (isNaN(first)) {
-        throw new Error("diso.mongo.Schema: Missing array index");
+        return throwError("Missing array index");
       } else {
         first = parts.shift();
         next = this.Type.attribute(first);
@@ -513,7 +540,7 @@
 
     SchemaUntypedArray.prototype.cast = function(values) {
       if (!Array.isArray(values)) {
-        throw new Error("diso.mongo.Schema: Expecting array for key:" + k);
+        throwError("Expecting array for key:" + k);
       }
       return values;
     };
@@ -524,7 +551,7 @@
 
     SchemaUntypedArray.prototype.attribute = function(path) {
       if (isNaN(first)) {
-        throw new Error("diso.mongo.Schema: Missing array index");
+        return throwError("Missing array index");
       } else {
         return null;
       }

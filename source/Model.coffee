@@ -2,6 +2,7 @@ MongoDB = require('mongodb')
 MongoJS = require('mongojs')
 Type    = require('type-of-is')
 
+BaseModel = require('./BaseModel')
 DataModel = require('./DataModel')
 Schema    = require('./Schema')
 utils     = require('./utils')
@@ -104,24 +105,34 @@ class Model extends DataModel
     
     @collection().update(query, update, options, callback)
 
+  @makeOneOrMany : (objs)->
+    is_array = Type(objs, Array) 
+    
+    unless is_array
+      objs = [objs]
+
+    models = []
+    for obj in objs
+      unless Type.instance(obj, BaseModel)
+        obj = new @(obj)
+      models.push(obj)
+
+    if is_array
+      models
+    else
+      models[0]
+
   @insert : (opts)->
-    @collection().insert(opts.data, (error, docs)=>
-      if error
-        return opts.callback(error, null)
+    models = @makeOneOrMany(opts.data)
 
-      is_array = Type(docs, Array) 
-      
-      unless is_array
-        docs = [docs]
+    data = (m.data() for m in models)
 
-      models = ((new @(doc)) for doc in docs)
+    @collection().insert(data, (error, docs)=>
+      result = null
+      unless error
+        result = @makeOneOrMany(docs)
 
-      result = if is_array
-        models
-      else
-        models[0]
-
-      opts.callback(null, result)
+      opts.callback(error, result)
     )
 
   insert : (callback)->

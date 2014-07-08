@@ -1,5 +1,5 @@
 (function() {
-  var DataModel, Model, MongoDB, MongoJS, Schema, Type, utils,
+  var BaseModel, DataModel, Model, MongoDB, MongoJS, Schema, Type, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -8,6 +8,8 @@
   MongoJS = require('mongojs');
 
   Type = require('type-of-is');
+
+  BaseModel = require('./BaseModel');
 
   DataModel = require('./DataModel');
 
@@ -124,28 +126,47 @@
       return this.collection().update(query, update, options, callback);
     };
 
+    Model.makeOneOrMany = function(objs) {
+      var is_array, models, obj, _i, _len;
+      is_array = Type(objs, Array);
+      if (!is_array) {
+        objs = [objs];
+      }
+      models = [];
+      for (_i = 0, _len = objs.length; _i < _len; _i++) {
+        obj = objs[_i];
+        if (!Type.instance(obj, BaseModel)) {
+          obj = new this(obj);
+        }
+        models.push(obj);
+      }
+      if (is_array) {
+        return models;
+      } else {
+        return models[0];
+      }
+    };
+
     Model.insert = function(opts) {
-      return this.collection().insert(opts.data, (function(_this) {
+      var data, m, models;
+      models = this.makeOneOrMany(opts.data);
+      data = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = models.length; _i < _len; _i++) {
+          m = models[_i];
+          _results.push(m.data());
+        }
+        return _results;
+      })();
+      return this.collection().insert(data, (function(_this) {
         return function(error, docs) {
-          var doc, is_array, models, result;
-          if (error) {
-            return opts.callback(error, null);
+          var result;
+          result = null;
+          if (!error) {
+            result = _this.makeOneOrMany(docs);
           }
-          is_array = Type(docs, Array);
-          if (!is_array) {
-            docs = [docs];
-          }
-          models = (function() {
-            var _i, _len, _results;
-            _results = [];
-            for (_i = 0, _len = docs.length; _i < _len; _i++) {
-              doc = docs[_i];
-              _results.push(new this(doc));
-            }
-            return _results;
-          }).call(_this);
-          result = is_array ? models : models[0];
-          return opts.callback(null, result);
+          return opts.callback(error, result);
         };
       })(this));
     };

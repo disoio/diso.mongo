@@ -1,5 +1,5 @@
 (function() {
-  var BaseModel, DataModel, MongoDB, Schema, Type, utils,
+  var BaseModel, DataModel, MongoDB, Schema, Type, throwError, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
@@ -14,6 +14,10 @@
 
   utils = require('./utils');
 
+  throwError = function(msg) {
+    throw new Error("diso.mongo.DataModel: " + msg);
+  };
+
   DataModel = (function(_super) {
     __extends(DataModel, _super);
 
@@ -22,7 +26,7 @@
     }
 
     DataModel.schema = function(schema) {
-      var alias, k, v, _fn;
+      var alias, k, pschema, v, _fn;
       this._schema = new Schema({
         schema: schema,
         model: this
@@ -43,9 +47,10 @@
         v = schema[k];
         _fn(k);
       }
-      this.id_has_alias = ('_id' in schema) && schema._id.alias;
+      pschema = this._schema.processed_schema;
+      this.id_has_alias = ('_id' in pschema) && pschema._id.alias;
       if (this.id_has_alias) {
-        alias = schema._id.alias;
+        alias = pschema._id.alias;
         Object.defineProperty(this.prototype, alias, {
           get: function() {
             return this._data._id;
@@ -59,13 +64,16 @@
     };
 
     DataModel.cast = function(data) {
-      var id_alias;
+      var alias;
       if (!this._schema) {
-        throw new Error("diso.mongo.Model: @schema has not been defined for " + this.name);
+        throwError("@schema has not been called for " + this.name);
       }
       if (this.id_has_alias) {
-        id_alias = this.schema._id.alias;
+        alias = this._schema.processed_schema._id.alias;
         if (alias in data) {
+          if ('_id' in data) {
+            throwError("Cannot pass _id and its alias, " + alias + ", as data attributes");
+          }
           data._id = data[alias];
           delete data[alias];
         }
@@ -83,7 +91,7 @@
 
     DataModel.prototype.requireAttribute = function(attr) {
       if (!this.attributeExists(attr)) {
-        throw new Error("diso.mongo.Model: Missing attribute: " + attr);
+        return throwError("Missing attribute: " + attr);
       }
     };
 
@@ -163,7 +171,7 @@
         this._dataPath(args[0], args[1]);
         return this;
       }
-      throw new Error("diso.mongo.Model: Invalid argument to .data");
+      return throwError("Invalid argument to .data");
     };
 
     DataModel.prototype._dataPath = function(path, value) {
@@ -172,7 +180,7 @@
         value = null;
       }
       if (!Type(path, String)) {
-        throw new Error("diso.mongo.Model: Must use string as path accessor");
+        throwError("Must use string as path accessor");
       }
       parts = utils.splitPath(path);
       if (value) {

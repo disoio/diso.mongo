@@ -5,6 +5,9 @@ BaseModel = require('./BaseModel')
 Schema    = require('./Schema')
 utils     = require('./utils')
 
+throwError = (msg)->
+  throw new Error("diso.mongo.DataModel: #{msg}")
+
 class DataModel extends BaseModel
   constructor: (data)->      
     @_data = @constructor.cast(data)
@@ -25,10 +28,11 @@ class DataModel extends BaseModel
             @_dataPath(k, val)
         })
 
-    @id_has_alias = (('_id' of schema) and schema._id.alias)
+    pschema = @_schema.processed_schema
+    @id_has_alias = (('_id' of pschema) and pschema._id.alias)
 
     if @id_has_alias
-      alias = schema._id.alias
+      alias = pschema._id.alias
 
       Object.defineProperty(@prototype, alias, {
         get : ()->
@@ -41,15 +45,19 @@ class DataModel extends BaseModel
     @_schema
 
   # Cast data via model's schema
-  @cast: (data)->
+  @cast: (data)->    
     unless @_schema
-      throw new Error("diso.mongo.Model: @schema has not been defined for #{@name}")
+      throwError("@schema has not been called for #{@name}")
     
     # if the id has an alias, we set _id from it and then 
     # delete the alias from the data so it isn't duped
     if @id_has_alias
-      id_alias = @schema._id.alias
+      alias = @_schema.processed_schema._id.alias
+      
       if (alias of data)
+        if ('_id' of data)
+          throwError("Cannot pass _id and its alias, #{alias}, as data attributes")
+        
         data._id = data[alias]
         delete data[alias]
 
@@ -65,7 +73,7 @@ class DataModel extends BaseModel
   # throw an error if this model's schema doesn't define an attribute with the given name
   requireAttribute: (attr)->
     unless @attributeExists(attr)
-      throw new Error("diso.mongo.Model: Missing attribute: #{attr}")
+      throwError("Missing attribute: #{attr}")
 
   _map : (include_$model)->
     getData = (v)->
@@ -144,11 +152,11 @@ class DataModel extends BaseModel
       this._dataPath(args[0], args[1])
       return this
 
-    throw new Error("diso.mongo.Model: Invalid argument to .data")
+    throwError("Invalid argument to .data")
     
   _dataPath: (path, value = null)->
     unless Type(path, String)
-      throw new Error("diso.mongo.Model: Must use string as path accessor") 
+      throwError("Must use string as path accessor") 
 
     # unpack the path 
     parts = utils.splitPath(path)

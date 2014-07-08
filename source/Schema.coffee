@@ -4,12 +4,16 @@ Type    = require('type-of-is')
 BaseModel = require('./BaseModel')
 utils     = require('./utils')
 
+throwError = (msg)->
+  msg = "diso.mongo.Schema: #{msg}"
+  throw new Error(msg)
+
 class SchemaBase
   Type : null
 
-  constructor : (Type)->
-    if Type
-      @Type = Type
+  constructor : (type)->
+    if type
+      @Type = type
 
   attribute : (path)->
     null
@@ -38,12 +42,17 @@ class SchemaID extends SchemaBase
   alias : null
 
   generate : ()->
-    throw new Error("Must define generate method from SchemaID")
+    throwError("Must define generate method from SchemaID")
 
-makeSchemaID = (opts)->
+makeSchemaID = (opts)->  
   S = class extends SchemaID
 
-  S.prototype.Type  = opts.type
+  PrimitiveSchemaType = _checkPrimitiveSchemaType(opts.type)
+  if PrimitiveSchemaType
+    S.prototype.Type = new PrimitiveSchemaType().Type
+  else
+    throwError("SchemaID type must be a Schema Primitive")
+
   if ('alias' of opts)
     S.prototype.alias = opts.alias
   
@@ -104,9 +113,15 @@ class SchemaFloat extends SchemaPrimitive
   constructor :()->
     super(Number)
 
+  cast : (obj)->
+    parseFloat(obj)
+
 class SchemaInteger extends SchemaPrimitive
   constructor :()->
     super(Number)
+
+  cast : (obj)->
+    parseInt(obj)
 
 class SchemaLong extends SchemaPrimitive
   constructor :()->
@@ -147,7 +162,7 @@ _primitive_schemas = [
   SchemaUntyped
 ]
 
-_schemaForPrimitiveType = (()->
+_schemaTypeForPrimitive = (()->
   _primitive_types = _primitive_schemas.map((PS)->
     ps = new PS()
     ps.Type
@@ -161,6 +176,16 @@ _schemaForPrimitiveType = (()->
       _primitive_schemas[index]
 )()
 
+_checkPrimitiveSchemaType = (SchemaType)->
+  if (SchemaType in _primitive_schemas)
+    return SchemaType
+
+  PrimitiveSchemaType = _schemaTypeForPrimitive(SchemaType)
+  
+  if PrimitiveSchemaType
+    PrimitiveSchemaType
+  else
+    null
 
 class SchemaReference extends SchemaBase
   constructor : (data)->
@@ -172,8 +197,7 @@ class SchemaReference extends SchemaBase
       try
         obj = new @Model(obj)
       catch error
-        console.error(error)
-        throw "Unable to create reference from object of type #{Type(obj)}"
+        throwError("Unable to create reference from object of type #{Type(obj)}")
 
     obj.reference(@attributes)
 
@@ -202,7 +226,7 @@ class Schema extends SchemaBase
       unless (k of @_config)
         valid_attrs = Object.keys(@_config).join(', ')
         msg = "Invalid config attribute: #{k}. Valid attributes are #{valid_attrs}"
-        throw new Error(msg)
+        throwError(msg)
 
       @_config[k] = v
 
@@ -210,7 +234,7 @@ class Schema extends SchemaBase
     processed = {}
 
     _throwError = (attr)->
-      throw new Error("diso.mongo.Schema: Invalid schema type for field: #{attr}")
+      throwError("Invalid schema type for field: #{attr}")
     
     for attr, SchemaType of spec
       unless SchemaType
@@ -239,30 +263,28 @@ class Schema extends SchemaBase
         schema
     
     processed
-  
+
   # atoms are models, primitive schemas or primitive types  
   _processAtom : (SchemaType)->
     if (SchemaType is undefined) 
-      return null
-    
-    is_primitive = (SchemaType in _primitive_schemas)
-    is_schema_id = Type.extension(SchemaType, SchemaID)
-    if (is_primitive or is_schema_id)
-      return (new SchemaType())
+      null
 
-    PrimitiveSchemaType = _schemaForPrimitiveType(SchemaType)
-    if PrimitiveSchemaType
-      return (new PrimitiveSchemaType())
+    else if Type(SchemaType, SchemaReference)
+      # TODO : standardize so Reference constructor called here?
+      SchemaType
 
-    if Type(SchemaType, SchemaReference)
-      return SchemaType
+    else if Type.extension(SchemaType, SchemaID)
+      new SchemaType()
 
-    # if schema value is a descendant of Model, return a 
-    # schema model that casts to that Model
-    if Type.extension(SchemaType, BaseModel)
-      return SchemaType._schema
-    
-    null
+    else if Type.extension(SchemaType, BaseModel)
+      SchemaType._schema
+
+    else
+      PrimitiveType = _checkPrimitiveSchemaType(SchemaType)
+      if PrimitiveType 
+        new PrimitiveType()
+      else
+        null
   
   isType : (obj)->
     Type(obj, @Model)
@@ -272,13 +294,13 @@ class Schema extends SchemaBase
       return obj
 
     data = {}
-    
+
     for k, v of obj
       if @processed_schema.hasOwnProperty(k)
         schema = @processed_schema[k]
 
         unless (schema instanceof SchemaBase)
-          throw new Error("diso.mongo.Schema: Invalid schema for #{k}: #{schema}")
+          throwError("Invalid schema for #{k}: #{schema}")
         
         try
           data[k] = if Type(schema, Schema)
@@ -288,7 +310,7 @@ class Schema extends SchemaBase
             schema.cast(v)
 
         catch error
-          throw new Error("diso.mongo.Schema: #{k}: #{error}")
+          throwError("#{k}: #{error}")
                           
       else
         unless @_config.strict
@@ -318,7 +340,7 @@ class SchemaTypedArray extends SchemaBase
 
   cast : (values)->
     unless Array.isArray(values)
-      throw new Error("diso.mongo.Schema: Expecting array")
+      throwError("Expecting array")
     
     values.map((value)=>
       unless @Type.isType(value)
@@ -340,7 +362,7 @@ class SchemaTypedArray extends SchemaBase
     first = parts.shift()
 
     if isNaN(first)
-      throw new Error("diso.mongo.Schema: Missing array index")
+      throwError("Missing array index")
     else
       first = parts.shift() # get next part (skip the array index)
       next = @Type.attribute(first)
@@ -354,8 +376,7 @@ class SchemaTypedArray extends SchemaBase
 class SchemaUntypedArray extends SchemaBase
   cast : (values)->
     unless Array.isArray(values)
-      throw new Error("diso.mongo.Schema: Expecting array for key:#{k}")
-      
+      throwError("Expecting array for key:#{k}")
     values
     
   isType : (obj)->
@@ -363,7 +384,7 @@ class SchemaUntypedArray extends SchemaBase
 
   attribute : (path)->
     if isNaN(first)
-      throw new Error("diso.mongo.Schema: Missing array index")
+      throwError("Missing array index")
     else
       null
 
