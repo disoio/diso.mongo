@@ -14,6 +14,7 @@ class Model extends DataModel
   # optional, otherwise collection will be underscorized 
   # child class/constructor name
   @collection_name : null
+  @_collection : null
 
   @schema : (schema)->
     # Ensure that schema has an _id attribute
@@ -23,18 +24,15 @@ class Model extends DataModel
     super(schema)
 
   # Class method for accessing the backing mongodb collection
-  @collection: (name)->
-    # @db_url, @collection_name defined in child
-    # @db_url is required
-    # defaults to underscorized child class name
+  @collection: ()->
+    # finds collection with @collection_name defined in child
+    # otherwise defaults to underscorized child class name
+    unless @_collection
+      collection_name = @collection_name ? utils.underscorize(@name)
+      db = MongoJS(@db_url)
+      @_collection = db.collection(collection_name)
     
-    collection_name = if name
-      name
-    else
-      @collection_name ? utils.underscorize(@name)
-    
-    db = MongoJS(@db_url)
-    db.collection(collection_name)
+    @_collection
   
   # Find an instance of this model, given criteria
   @find: (opts)->
@@ -42,6 +40,8 @@ class Model extends DataModel
       id = opts.id
       delete opts.id
 
+      # TODO: support alias
+      
       if Type(id, String)
         id = new MongoDB.ObjectID(id)
 

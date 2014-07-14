@@ -28,6 +28,8 @@
 
     Model.collection_name = null;
 
+    Model._collection = null;
+
     Model.schema = function(schema) {
       if (!('_id' in schema)) {
         schema._id = Schema.ObjectID;
@@ -35,11 +37,14 @@
       return Model.__super__.constructor.schema.call(this, schema);
     };
 
-    Model.collection = function(name) {
+    Model.collection = function() {
       var collection_name, db, _ref;
-      collection_name = name ? name : (_ref = this.collection_name) != null ? _ref : utils.underscorize(this.name);
-      db = MongoJS(this.db_url);
-      return db.collection(collection_name);
+      if (!this._collection) {
+        collection_name = (_ref = this.collection_name) != null ? _ref : utils.underscorize(this.name);
+        db = MongoJS(this.db_url);
+        this._collection = db.collection(collection_name);
+      }
+      return this._collection;
     };
 
     Model.find = function(opts) {
