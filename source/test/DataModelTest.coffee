@@ -35,12 +35,18 @@ class Derp extends EmbeddedModel
     dorp : Dorp
   })
 
+class Gort extends EmbeddedModel
+  @schema({
+    honk : Schema.Integer
+  })
+
 class Wonky extends EmbeddedModel
   @schema({
     what  : Schema.String
     why   : Schema.String
     where : Schema.String
     ok    : Schema.Boolean
+    gort  : Gort
   })
 
 class Cletus extends Model
@@ -64,6 +70,10 @@ module.exports = {
 
   "DataModel" : {
     "should have .data method that": ()->
+      gort = new Gort({
+        honk : 4
+      })
+
       cletus_jr = new Cletus(
         derp : {
           name : "CLEAT"
@@ -79,12 +89,14 @@ module.exports = {
             why   : 'b'
             where : 'c'
             ok    : true
+            gort  : gort
           }
           {
             what  : 'abc'
             why   : 'def'
             where : 'ghi'
             ok    : false
+            gort  : gort
           }
         ]
         name : "CLEATUS JR."
@@ -148,12 +160,18 @@ module.exports = {
                 why   : 'b'
                 where : 'c'
                 ok    : true
+                gort  : {
+                  honk : 4
+                }
               }
               { 
                 what  : 'abc'
                 why   : 'def'
                 where : 'ghi'
                 ok    : false 
+                gort  : {
+                  honk : 4
+                }
               }
             ]
             name : 'CLEATUS 3',

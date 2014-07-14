@@ -155,7 +155,7 @@
     Model.insert = function(opts) {
       var data, m, models;
       models = this.makeOneOrMany(opts.data);
-      data = (function() {
+      data = Type(models, Array) ? (function() {
         var _i, _len, _results;
         _results = [];
         for (_i = 0, _len = models.length; _i < _len; _i++) {
@@ -163,7 +163,7 @@
           _results.push(m.data());
         }
         return _results;
-      })();
+      })() : models.data();
       return this.collection().insert(data, (function(_this) {
         return function(error, docs) {
           var result;
@@ -178,13 +178,13 @@
 
     Model.prototype.insert = function(callback) {
       return this.constructor.insert({
-        data: this.data(),
+        data: this,
         callback: callback
       });
     };
 
     Model.prototype.save = function(callback) {
-      var collection, data, error, _this;
+      var collection, error;
       if (this.beforeSave) {
         this.beforeSave();
       }
@@ -194,43 +194,26 @@
           return callback(error, null);
         });
       }
-      _this = this;
-      data = this.toJSON();
       collection = this.constructor.collection();
-      return collection.save(data, function(error, document) {
-        if (document && !error) {
-          _this._data._id = document._id;
-          if (_this.afterSave) {
-            _this.afterSave();
+      return collection.save(this.data(), (function(_this) {
+        return function(error, document) {
+          if (document && !error) {
+            _this._id = document._id;
           }
-        }
-        return callback(error);
-      });
+          return callback(error);
+        };
+      })(this));
     };
 
     Model.prototype.remove = function(callback) {
-      var _this;
-      _this = this;
-      return this.collection(function(error, collection) {
-        var selector;
-        if (error) {
-          return callback(error, null);
-        }
-        if (_this.beforeRemove) {
-          _this.beforeRemove();
-        }
-        selector = {
-          _id: _this._data._id
-        };
-        return collection.remove(selector, {
-          safe: true
-        }, function(error, num_removed) {
-          if (!error && _this.afterRemove) {
-            _this.afterRemove();
-          }
-          return callback(error, num_removed);
-        });
-      });
+      var collection, selector;
+      collection = this.constructor.collection();
+      selector = {
+        _id: this._id
+      };
+      return collection.remove(selector, {
+        safe: true
+      }, callback);
     };
 
     Model.prototype.reference = function(attributes) {

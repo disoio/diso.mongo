@@ -305,7 +305,10 @@ class Schema extends SchemaBase
         try
           data[k] = if Type(schema, Schema)
             Model = schema.Model
-            new Model(v)
+            if Type(v, Model)
+              v
+            else
+              new Model(v)
           else
             schema.cast(v)
 

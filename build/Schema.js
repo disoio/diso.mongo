@@ -442,7 +442,7 @@
             throwError("Invalid schema for " + k + ": " + schema);
           }
           try {
-            data[k] = Type(schema, Schema) ? (Model = schema.Model, new Model(v)) : schema.cast(v);
+            data[k] = Type(schema, Schema) ? (Model = schema.Model, Type(v, Model) ? v : new Model(v)) : schema.cast(v);
           } catch (_error) {
             error = _error;
             throwError("" + k + ": " + error);

@@ -1,5 +1,5 @@
 (function() {
-  var Assert, Asserts, Barf, Cletus, Derp, Dorp, EmbeddedModel, Food, Garth, Model, Mongo, Schema, Type, Wayne, Wonky,
+  var Assert, Asserts, Barf, Cletus, Derp, Dorp, EmbeddedModel, Food, Garth, Gort, Model, Mongo, Schema, Type, Wayne, Wonky,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -85,6 +85,21 @@
 
   })(EmbeddedModel);
 
+  Gort = (function(_super) {
+    __extends(Gort, _super);
+
+    function Gort() {
+      return Gort.__super__.constructor.apply(this, arguments);
+    }
+
+    Gort.schema({
+      honk: Schema.Integer
+    });
+
+    return Gort;
+
+  })(EmbeddedModel);
+
   Wonky = (function(_super) {
     __extends(Wonky, _super);
 
@@ -96,7 +111,8 @@
       what: Schema.String,
       why: Schema.String,
       where: Schema.String,
-      ok: Schema.Boolean
+      ok: Schema.Boolean,
+      gort: Gort
     });
 
     return Wonky;
@@ -153,7 +169,10 @@
   module.exports = {
     "DataModel": {
       "should have .data method that": function() {
-        var cletus_jr;
+        var cletus_jr, gort;
+        gort = new Gort({
+          honk: 4
+        });
         cletus_jr = new Cletus({
           derp: {
             name: "CLEAT",
@@ -168,12 +187,14 @@
               what: 'a',
               why: 'b',
               where: 'c',
-              ok: true
+              ok: true,
+              gort: gort
             }, {
               what: 'abc',
               why: 'def',
               where: 'ghi',
-              ok: false
+              ok: false,
+              gort: gort
             }
           ],
           name: "CLEATUS JR."
@@ -239,12 +260,18 @@
                   what: 'a',
                   why: 'b',
                   where: 'c',
-                  ok: true
+                  ok: true,
+                  gort: {
+                    honk: 4
+                  }
                 }, {
                   what: 'abc',
                   why: 'def',
                   where: 'ghi',
-                  ok: false
+                  ok: false,
+                  gort: {
+                    honk: 4
+                  }
                 }
               ],
               name: 'CLEATUS 3',

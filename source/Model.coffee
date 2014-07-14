@@ -122,10 +122,17 @@ class Model extends DataModel
     else
       models[0]
 
+  # the underlying insert method on the collection can accept 
+  # either an array or a single object to insert as its first 
+  # argument. we map it/them to an model objects and then 
+  # call .data to get the underlying data to insert
   @insert : (opts)->
     models = @makeOneOrMany(opts.data)
-
-    data = (m.data() for m in models)
+    
+    data = if Type(models, Array)
+     (m.data() for m in models)
+    else 
+      models.data()
 
     @collection().insert(data, (error, docs)=>
       result = null
@@ -137,7 +144,7 @@ class Model extends DataModel
 
   insert : (callback)->
     @constructor.insert(
-      data     : @data()
+      data     : @
       callback : callback
     )
 
@@ -151,40 +158,19 @@ class Model extends DataModel
         callback(error, null)
       )
 
-    _this = @
-    data = @toJSON()
-
     collection = @constructor.collection()
 
-    collection.save(data, (error, document)->
+    collection.save(@data(), (error, document)=>
       if (document and not error)
-        _this._data._id = document._id
-
-        if _this.afterSave
-          _this.afterSave()
+        @_id = document._id
 
       callback(error)
     )
 
   remove: (callback)->
-    _this = @
-
-    @collection((error, collection)->
-      if error
-        return callback(error, null)
-      
-      if _this.beforeRemove
-        _this.beforeRemove() 
-
-      selector = { _id : _this._data._id }
-
-      collection.remove(selector, {safe: true}, (error, num_removed)->
-        if (!error and _this.afterRemove)
-          _this.afterRemove()
-
-        callback(error, num_removed)
-      )
-    )
+    collection = @constructor.collection()
+    selector = { _id : @_id }
+    collection.remove(selector, {safe: true}, callback)
 
   reference : (attributes)->
     unless Type(attributes, Array)
