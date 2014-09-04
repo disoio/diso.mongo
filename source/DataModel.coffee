@@ -1,39 +1,84 @@
+# NPM dependencies
+# ------------------
+# [type-of-is](https://github.com/stephenhandley/type-of-is)  
+# [mongodb](https://github.com/mongodb/node-mongodb-native)  
+# [async](https://github.com/caolan/async)  
 Type    = require('type-of-is')
 MongoDB = require('mongodb')
+Async   = require('async')
 
-BaseModel = require('./BaseModel') 
-Schema    = require('./Schema')
-utils     = require('./utils')
+# Local dependencies
+# ------------------
+# [BaseModel](./BaseModel.html)  
+# [ReferenceModel](./ReferenceModel.html)  
+# [Schema](./Schema.html)  
+# [utils](./utils.html)  
+BaseModel      = require('./BaseModel') 
+ReferenceModel = require('./ReferenceModel')
+Schema         = require('./Schema')
+utils          = require('./utils')
 
+# throwError
+# ----------
+# convenience method for throwing errors in this class
 throwError = (msg)->
   throw new Error("diso.mongo.DataModel: #{msg}")
 
+# DataModel
+# =========
+# This class is the base of the model hierarchy, taking
+# care of data access and schema enforcement / casting.
 class DataModel extends BaseModel
+
+  # constructor
+  # -----------
+  # ###required args
+  # **data** : the raw data being used to create this model
   constructor: (data)->      
     @_data = @constructor.cast(data)
 
+  # SCHEMA METHODS
+  # --------------
+
+  # @schema
+  # -------
+  # Called by child classes to define their schema. This
+  # method gets passed an object defining the child class'
+  # schema attributes. This is processed and the result is 
+  # used for data casting and validation
+  #
+  # ###required args
+  # **schema** : plain object defining schema attributes
   @schema : (schema)->
     @_schema = new Schema({
       schema  : schema
       model   : @
     })
 
+    # defines accessors for schema attributes as long as
+    # those attributes don't already exist.
     for k,v of schema
       do (k)=>
-        Object.defineProperty(@prototype, k, {
-          get: ()->
-            @_data[k]
+        unless k of @prototype
+          Object.defineProperty(@prototype, k, {
+            get: ()->
+              @_data[k]
 
-          set: (val)->
-            @_dataPath(k, val)
-        })
+            set: (val)->
+              @_dataPath(k, val)
+          })
 
+    # if the schema specifies an alias for the _id property, 
+    # an associated property is defined using the alias 
     pschema = @_schema.processed_schema
     @id_has_alias = (('_id' of pschema) and pschema._id.alias)
 
     if @id_has_alias
       alias = pschema._id.alias
 
+      if alias of @prototype
+        throwError("Invalid alias: #{alias}, conflicts with exist property")
+      
       Object.defineProperty(@prototype, alias, {
         get : ()->
           @_data._id
@@ -44,7 +89,11 @@ class DataModel extends BaseModel
 
     @_schema
 
-  # Cast data via model's schema
+  # @cast
+  # -----
+  # This is called by the constructor to cast data using
+  # this model's schema. After handling _id aliasing, this
+  # method delegates the cast to this model's schema object.
   @cast: (data)->    
     unless @_schema
       throwError("@schema has not been called for #{@name}")
@@ -63,64 +112,56 @@ class DataModel extends BaseModel
 
     @_schema.cast(data)
 
-  # check whether this model's schema defines an attribute with the given path
+  # attributeExists
+  # ---------------
+  # check whether this model's schema defines an attribute 
+  # with the given path
   attributeExists: (path)->
     utils.splitPath(path)
 
+  # attributeSchema
+  # ---------------
+  # Get the schema associate with this model's attribute at
+  # the given path
   attributeSchema: (path)->
     @constructor._schema.attribute(path)
 
-  # throw an error if this model's schema doesn't define an attribute with the given name
+  # requireAttribute
+  # ----------------
+  # Throw an error if this model's schema doesn't define an 
+  # attribute with the given name
   requireAttribute: (attr)->
     unless @attributeExists(attr)
       throwError("Missing attribute: #{attr}")
 
-  _map : (include_$model)->
-    getData = (v)->
-      if Type.instance(v, BaseModel)
-        v._map(include_$model)
-      else
-        v
-
-    result = {}
-    for k,v of @_data
-      result[k] = if Type(v, Array)
-        v.map(getData)
-      else
-        getData(v)
-
-    if include_$model
-      result.$model = @constructor.name
-
-    result
-
-  @deflate : (obj)->
-    switch Type(obj)
-      when Array
-        obj.map(@deflate)
-
-      when Object
-        res = {}
-        for k,v of obj
-          res[k] = @deflate(v) 
-        res
-
-      else
-        if Type.instance(obj, BaseModel)
-          obj.deflate()
-        else
-          obj
-
-  deflate : ()->
-    @_map(true)
+  # DATA ACCESS METHODS
+  # -------------------
   
-  # multi-purpose accessor for this model's underlying data
+  # data 
+  # ----
+  # Convenience accessor for this model's underlying data
+  # that performs different set/get behaviors depending on 
+  # the arity and type signature of its arguments
+  #
+  # ()               : return model and its embedded models'
+  #                    underlying data as plain object
+  #
+  # (<String>)       : read the attribute at the string path
+  #
+  # (<Array>)        : read the attributes at each string 
+  #                    in array
+  #
+  # (<Object>)       : use each <String>,<val> pair of 
+  #                    attribute path & value in object to 
+  #                    set this model's data
+  #
+  # (<String>,<val>) : set the attribute at the string path 
+  #                    to val
   data: (args...)->
     # Full read
     # calling with no arguments returns the complete, underlying data object
     if (args.length is 0)
-      return @_map(false)
-
+      return @_map()
 
     if (args.length is 1)
       arg = args[0]
@@ -153,7 +194,122 @@ class DataModel extends BaseModel
       return this
 
     throwError("Invalid argument to .data")
+
+
+  # deflate
+  # -------
+  # Called by server to create json object for transfer over
+  # the wire
+  #
+  # ### required args
+  # **model_key** : The attribute name used to hold the model's 
+  #                 constructor name to be used by inflate
+  #
+  # ### optional args
+  # **attrs** : Only include the specified attributes
+  deflate : (args)->
+    unless ('model_key' of args)
+      throwError("deflate call missing 'model_key' arg")
+
+    @_map(args)
+
+  # set
+  # ---
+  # Convenience alias for .data(path, value)
+  set: (path, value)->
+    @_dataPath(path, value)
+
+  # get
+  # ---
+  # Convenience alias for .data(path)
+  get: (path)->
+    @_dataPath(path)
+
+  # STUB METHODS
+  # ------------
+
+  # validate
+  # --------
+  # Child classes can override this method to perform model
+  # validation. Should return error if validation fails, or
+  # null if validation succeeded
+  validate: ()->
+    return null
+
+  # INTERNAL METHODS
+  # ----------------
+
+  # _map
+  # ----
+  # Traverses this model and its embedded models and reference
+  # models to produce a plain object of its data.
+  #
+  # This is called via .data() and .deflate(). The difference 
+  # between the two are that data is primarily used before
+  # persisting to the database, while deflate is called prior
+  # to transfer over the wire to the client. In the latter case
+  # the model name is added as an additional attribute for use
+  # in inflation on the other side of the wire
+  #
+  # ###optional args
+  # **model_key** : If present, specifies the attribute name 
+  #                 used to hold this model's constructor name
+  #
+  # **attrs**     : Only include the specified attributes
+  _map : (args)->
+    args ?= {}
     
+    model_key = if ('model_key' of args)
+      args.model_key
+    else
+      null
+
+    attrs = if ('attrs' of args)
+      args.attrs
+    else
+      null
+
+    # atom function that gets mapped across the object
+    getData = (v)->
+      is_model     = Type.instance(v, BaseModel)
+      is_reference = Type.instance(v, ReferenceModel)
+
+      if (is_model or is_reference)
+        v._map(
+          attrs     : attrs
+          model_key : model_key
+        )
+      else
+        v
+
+    result = {}
+
+    for k,v of @_data
+      if (!attrs or (k in attrs))
+        result[k] = if Type(v, Array)
+          v.map(getData)
+        else
+          getData(v)
+
+    # add model key if arg present
+    if model_key
+      result[model_key] = @constructor.name
+
+    result
+  
+  # _dataPath
+  # ---------
+  # Get or set the value at path.
+  # 
+  # ### required args 
+  # **path** : can be simple string or composite path
+  #            consisting of . separated parts (in order 
+  #            to access subdocs, arrays, embedded models
+  # 
+  # ### optional args
+  # **value** : if value is specified, use it to set the
+  #             attribute at path, otherwise return that
+  #             attribute's value
   _dataPath: (path, value = null)->
     unless Type(path, String)
       throwError("Must use string as path accessor") 
@@ -185,15 +341,5 @@ class DataModel extends BaseModel
 
       return data
 
-  # Alias for .data(path, value)
-  set: (path, value)->
-    @_dataPath(path, value)
-
-  # Alias for .data(path)
-  get: (path)->
-    @_dataPath(path)
-
-  validate: ()->
-    return null
 
 module.exports = DataModel

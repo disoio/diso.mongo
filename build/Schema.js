@@ -1,5 +1,5 @@
 (function() {
-  var BaseModel, MongoDB, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaID, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntyped, SchemaUntypedArray, Type, makeSchemaID, primitive, throwError, utils, _checkPrimitiveSchemaType, _i, _len, _primitive_schemas, _schemaTypeForPrimitive,
+  var BaseModel, MongoDB, ReferenceModel, Schema, SchemaBase, SchemaBinary, SchemaBoolean, SchemaCode, SchemaDBRef, SchemaDate, SchemaDouble, SchemaFloat, SchemaID, SchemaInteger, SchemaLong, SchemaObject, SchemaObjectID, SchemaPrimitive, SchemaReference, SchemaRegExp, SchemaString, SchemaSymbol, SchemaTypedArray, SchemaUntyped, SchemaUntypedArray, Type, makeSchemaID, primitive, throwError, utils, _checkPrimitiveSchemaType, _i, _len, _primitive_schemas, _schemaTypeForPrimitive,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -10,6 +10,8 @@
   Type = require('type-of-is');
 
   BaseModel = require('./BaseModel');
+
+  ReferenceModel = require('./ReferenceModel');
 
   utils = require('./utils');
 
@@ -76,7 +78,7 @@
 
   })(SchemaBase);
 
-  makeSchemaID = function(opts) {
+  makeSchemaID = function(args) {
     var PrimitiveSchemaType, S;
     S = (function(_super) {
       __extends(_Class, _super);
@@ -88,16 +90,16 @@
       return _Class;
 
     })(SchemaID);
-    PrimitiveSchemaType = _checkPrimitiveSchemaType(opts.type);
+    PrimitiveSchemaType = _checkPrimitiveSchemaType(args.type);
     if (PrimitiveSchemaType) {
       S.prototype.Type = new PrimitiveSchemaType().Type;
     } else {
       throwError("SchemaID type must be a Schema Primitive");
     }
-    if ('alias' in opts) {
-      S.prototype.alias = opts.alias;
+    if ('alias' in args) {
+      S.prototype.alias = args.alias;
     }
-    S.prototype.auto = 'gen' in opts ? (S.prototype.generate = opts.gen, true) : false;
+    S.prototype.auto = 'gen' in args ? (S.prototype.generate = args.gen, true) : false;
     return S;
   };
 
@@ -341,14 +343,15 @@
     }
 
     SchemaReference.prototype.cast = function(obj) {
-      var error;
-      if (!Type.instance(obj, this.Model)) {
-        try {
-          obj = new this.Model(obj);
-        } catch (_error) {
-          error = _error;
-          throwError("Unable to create reference from object of type " + (Type(obj)));
+      if (Type.instance(obj, ReferenceModel)) {
+        if (!Type.instance(obj.Model, this.Model)) {
+          throwError("Can't cast reference of type " + obj.Model.name + " to " + this.Model.name);
         }
+        obj.attributes = this.attributes;
+        return obj;
+      }
+      if (!Type.instance(obj, this.Model)) {
+        obj = new this.Model(obj);
       }
       return obj.reference(this.attributes);
     };
@@ -360,12 +363,12 @@
   Schema = (function(_super) {
     __extends(Schema, _super);
 
-    function Schema(opts) {
+    function Schema(args) {
       this.cast = __bind(this.cast, this);
       var schema;
       Schema.__super__.constructor.call(this);
-      schema = opts.schema;
-      this.Model = opts.model;
+      schema = args.schema;
+      this.Model = args.model;
       this.processed_schema = this._process(schema);
     }
 
@@ -373,11 +376,11 @@
       strict: false
     };
 
-    Schema.prototype.config = function(opts) {
+    Schema.prototype.config = function(args) {
       var k, msg, v, valid_attrs, _results;
       _results = [];
-      for (k in opts) {
-        v = opts[k];
+      for (k in args) {
+        v = args[k];
         if (!(k in this._config)) {
           valid_attrs = Object.keys(this._config).join(', ');
           msg = "Invalid config attribute: " + k + ". Valid attributes are " + valid_attrs;

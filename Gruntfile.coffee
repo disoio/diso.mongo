@@ -17,26 +17,17 @@ module.exports = (grunt)->
       files: ['**/*.coffee']
       tasks: ['coffee']
     }
-    
-    shell : {
-    }
 
     docco: {
-      options: {
-          dst: 'docs',
-          layout: 'parallel'
-      }
-      docs: {
-          files: [
-              {
-                  expand: true,
-                  cwd: 'public/js'
-              }
-          ]
+      debug: {
+        src: ['source/**/*.coffee'],
+        options: {
+          output: 'docs/'
+        }
       }
     }
   )
 
   grunt.loadNpmTasks('grunt-contrib-coffee')
   grunt.loadNpmTasks('grunt-contrib-watch')
-  grunt.loadNpmTasks('grunt-shell')
+  grunt.loadNpmTasks('grunt-docco')

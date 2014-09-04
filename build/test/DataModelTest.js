@@ -199,7 +199,7 @@
           ],
           name: "CLEATUS JR."
         });
-        return {
+        ({
           "returns root attribute when passed string atom as argument": function() {
             return Assert.equal(cletus_jr.data('name'), "CLEATUS JR.");
           },
@@ -279,123 +279,76 @@
             };
             return Assert.deepEqual(actual, expected);
           }
-        };
-      },
-      "should have instance and class .deflate methods that": {
-        "return structure like .data() but with $model names when called on instance": function() {
-          var actual, barf, expected, foods, name, viewers, _id;
-          foods = (function() {
-            var _i, _len, _ref, _results;
-            _ref = ['taco', 'pizza', 'orange'];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              name = _ref[_i];
-              _results.push(new Food({
-                name: name
-              }));
-            }
-            return _results;
-          })();
-          viewers = (function() {
-            var _i, _len, _ref, _results;
-            _ref = ['Jamie', 'Eustace', 'Delano'];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              name = _ref[_i];
-              _results.push({
-                name: name
+        });
+        return {
+          "should have .deflate method that": {
+            "returns structure like .data() with model names": function() {
+              var actual, barf, expected, foods, name, viewers, _id;
+              foods = (function() {
+                var _i, _len, _ref, _results;
+                _ref = ['taco', 'pizza', 'orange'];
+                _results = [];
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                  name = _ref[_i];
+                  _results.push(new Food({
+                    name: name
+                  }));
+                }
+                return _results;
+              })();
+              viewers = (function() {
+                var _i, _len, _ref, _results;
+                _ref = ['Jamie', 'Eustace', 'Delano'];
+                _results = [];
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                  name = _ref[_i];
+                  _results.push({
+                    name: name
+                  });
+                }
+                return _results;
+              })();
+              barf = new Barf({
+                target: 'there',
+                duration: 5000,
+                contents: foods,
+                viewers: viewers
               });
+              _id = barf._id;
+              actual = barf.deflate({
+                model_key: '$model'
+              });
+              expected = {
+                target: 'there',
+                duration: 5000,
+                contents: [
+                  {
+                    name: 'taco',
+                    '$model': 'Food'
+                  }, {
+                    name: 'pizza',
+                    '$model': 'Food'
+                  }, {
+                    name: 'orange',
+                    '$model': 'Food'
+                  }
+                ],
+                viewers: [
+                  {
+                    name: 'Jamie'
+                  }, {
+                    name: 'Eustace'
+                  }, {
+                    name: 'Delano'
+                  }
+                ],
+                _id: _id,
+                '$model': 'Barf'
+              };
+              return Assert.deepEqual(actual, expected);
             }
-            return _results;
-          })();
-          barf = new Barf({
-            target: 'there',
-            duration: 5000,
-            contents: foods,
-            viewers: viewers
-          });
-          _id = barf._id;
-          actual = barf.deflate();
-          expected = {
-            target: 'there',
-            duration: 5000,
-            contents: [
-              {
-                name: 'taco',
-                '$model': 'Food'
-              }, {
-                name: 'pizza',
-                '$model': 'Food'
-              }, {
-                name: 'orange',
-                '$model': 'Food'
-              }
-            ],
-            viewers: [
-              {
-                name: 'Jamie'
-              }, {
-                name: 'Eustace'
-              }, {
-                name: 'Delano'
-              }
-            ],
-            _id: _id,
-            '$model': 'Barf'
-          };
-          return Assert.deepEqual(actual, expected);
-        },
-        "walk objects and arrays and call instance method on models in them when called via class": function() {
-          var actual, expected, garth1, garth2, obj, wayne1, wayne2;
-          garth1 = new Garth({
-            name: 'garth!'
-          });
-          wayne1 = new Wayne({
-            name: 'wayne!'
-          });
-          garth2 = new Garth({
-            name: 'garth2!'
-          });
-          wayne2 = new Wayne({
-            name: 'wayne2!'
-          });
-          obj = {
-            something: 'else',
-            list: [garth1, wayne1],
-            garth2: garth2,
-            dorf: {
-              wayne2: wayne2
-            }
-          };
-          actual = Model.deflate(obj);
-          expected = {
-            something: 'else',
-            list: [
-              {
-                name: 'garth!',
-                _id: garth1._id,
-                '$model': 'Garth'
-              }, {
-                name: 'wayne!',
-                _id: wayne1._id,
-                '$model': 'Wayne'
-              }
-            ],
-            garth2: {
-              name: 'garth2!',
-              _id: garth2._id,
-              '$model': 'Garth'
-            },
-            dorf: {
-              wayne2: {
-                name: 'wayne2!',
-                _id: wayne2._id,
-                '$model': 'Wayne'
-              }
-            }
-          };
-          return Assert.deepEqual(actual, expected);
-        }
+          }
+        };
       },
       "that has invalid schema": {
         "should throw error": function() {
@@ -512,7 +465,7 @@
         };
       },
       "that has schema containing reference": function() {
-        var Person, User, user_ref_attrs;
+        var Person, User, fart, fartropolis, user_ref_attrs;
         User = (function(_super) {
           __extends(User, _super);
 
@@ -524,7 +477,8 @@
 
           User.schema({
             name: Schema.String,
-            email: Schema.String
+            email: Schema.String,
+            brain: Schema.Boolean
           });
 
           return User;
@@ -548,25 +502,47 @@
           return Person;
 
         })(Model);
+        fart = new User({
+          name: "FART",
+          email: "fart@fart.gov",
+          brain: true
+        });
+        fartropolis = new Person({
+          barf: "YES!",
+          user: fart
+        });
         return {
-          "should have expected attributes in reference": function() {
-            var fart, fartropolis, k, user, user_keys, _i, _len, _results;
-            fart = new User({
-              name: "FART"
-            });
-            fartropolis = new Person({
+          "should have expected model attributes proxied in reference": function() {
+            var fuser;
+            fuser = fartropolis.user;
+            Assert.equal(fart.name, fuser.name);
+            Assert.equal(fart._id, fuser._id);
+            Assert.equal(fart.email, fuser.email);
+            return Assert.equal(fart.brain, fuser.brain);
+          },
+          "should have only reference attributes in .data": function() {
+            var actual, expected;
+            expected = {
               barf: "YES!",
-              user: fart
-            });
-            user = fartropolis.user;
-            user_keys = Object.keys(user);
-            Assert.equal(user_keys.length, 2);
-            _results = [];
-            for (_i = 0, _len = user_ref_attrs.length; _i < _len; _i++) {
-              k = user_ref_attrs[_i];
-              _results.push(Assert(k in user));
-            }
-            return _results;
+              _id: fartropolis._id,
+              user: {
+                _id: fart._id,
+                name: "FART"
+              }
+            };
+            actual = fartropolis.data();
+            return Assert.deepEqual(expected, actual);
+          },
+          "should have .data method on reference that proxies to model": function() {
+            var fart_deets, fart_deets_expected, fart_name;
+            fart_name = fartropolis.user.data('name');
+            Assert.equal(fart_name, "FART");
+            fart_deets = fartropolis.user.data(['name', 'email']);
+            fart_deets_expected = {
+              name: 'FART',
+              email: 'fart@fart.gov'
+            };
+            return Assert.deepEqual(fart_deets, fart_deets_expected);
           }
         };
       }

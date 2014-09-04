@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Schema.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="BaseModel.html">
+                BaseModel.coffee
+              </a>
+            
+              
+              <a class="source" href="DataModel.html">
+                DataModel.coffee
+              </a>
+            
+              
+              <a class="source" href="EmbeddedModel.html">
+                EmbeddedModel.coffee
+              </a>
+            
+              
+              <a class="source" href="Model.html">
+                Model.coffee
+              </a>
+            
+              
+              <a class="source" href="ReferenceModel.html">
+                ReferenceModel.coffee
+              </a>
+            
+              
+              <a class="source" href="Schema.html">
+                Schema.coffee
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.coffee
+              </a>
+            
+              
+              <a class="source" href="DataModelTest.html">
+                DataModelTest.coffee
+              </a>
+            
+              
+              <a class="source" href="PersistenceTest.html">
+                PersistenceTest.coffee
+              </a>
+            
+              
+              <a class="source" href="test.html">
+                test.coffee
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Schema.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>MongoDB = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongodb'</span>)
+Type    = <span class="hljs-built_in">require</span>(<span class="hljs-string">'type-of-is'</span>)
+
+BaseModel      = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./BaseModel'</span>)
+ReferenceModel = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./ReferenceModel'</span>)
+utils          = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./utils'</span>)
+
+<span class="hljs-function"><span class="hljs-title">throwError</span> = <span class="hljs-params">(msg)</span>-&gt;</span>
+  msg = <span class="hljs-string">"diso.mongo.Schema: <span class="hljs-subst">#{msg}</span>"</span>
+  <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error(msg)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaBase</span></span>
+  Type : <span class="hljs-literal">null</span>
+
+  constructor : <span class="hljs-function"><span class="hljs-params">(type)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> type
+      <span class="hljs-property">@Type</span> = type
+
+  attribute : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>
+    <span class="hljs-literal">null</span>
+
+  isType : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-property">@Type</span>
+      Type(obj, <span class="hljs-property">@Type</span>)
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-literal">true</span>
+
+  cast : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    <span class="hljs-keyword">unless</span> <span class="hljs-property">@Type</span>
+      <span class="hljs-keyword">return</span> obj
+
+    <span class="hljs-keyword">if</span> ((obj <span class="hljs-keyword">is</span> <span class="hljs-literal">null</span>) <span class="hljs-keyword">or</span> (obj <span class="hljs-keyword">is</span> <span class="hljs-literal">undefined</span>))
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-property">@isType</span>(obj))
+      obj
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-keyword">new</span> <span class="hljs-property">@Type</span>(obj)
+      
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaID</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span></span>
+  auto  : <span class="hljs-literal">false</span>
+  alias : <span class="hljs-literal">null</span>
+
+  generate : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    throwError(<span class="hljs-string">"Must define generate method from SchemaID"</span>)
+
+<span class="hljs-function"><span class="hljs-title">makeSchemaID</span> = <span class="hljs-params">(args)</span>-&gt;</span>  
+  S = <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaID</span></span>
+
+  PrimitiveSchemaType = _checkPrimitiveSchemaType(args.type)
+  <span class="hljs-keyword">if</span> PrimitiveSchemaType
+    S.prototype.Type = <span class="hljs-keyword">new</span> PrimitiveSchemaType().Type
+  <span class="hljs-keyword">else</span>
+    throwError(<span class="hljs-string">"SchemaID type must be a Schema Primitive"</span>)
+
+  <span class="hljs-keyword">if</span> (<span class="hljs-string">'alias'</span> <span class="hljs-keyword">of</span> args)
+    S.prototype.alias = args.alias
+  
+  S.prototype.auto = <span class="hljs-keyword">if</span> (<span class="hljs-string">'gen'</span> <span class="hljs-keyword">of</span> args)
+    S.prototype.generate = args.gen
+    <span class="hljs-literal">true</span>
+  <span class="hljs-keyword">else</span>
+    <span class="hljs-literal">false</span>
+
+  S
+
+makeSchemaID.Base = SchemaID
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaObjectID</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaID</span></span>
+  Type : MongoDB.ObjectID
+  auto : <span class="hljs-literal">true</span>
+
+  generate : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">new</span> MongoDB.ObjectID()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>hack temp
+TODO: fix dis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  isType : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    Type.string(obj) <span class="hljs-keyword">is</span> <span class="hljs-string">'ObjectID'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="schemaprimitive">SchemaPrimitive</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>The lowest level primitive Schema types
+These get exported on SchemaObject class</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaPrimitive</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span></span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaBinary</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.Binary)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaBoolean</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(Boolean)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaCode</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.Code)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaDate</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(Date)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaDBRef</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.DBRef)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaDouble</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.Double)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaFloat</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(Number)
+
+  cast : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    parseFloat(obj)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaInteger</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(Number)
+
+  cast : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    parseInt(obj)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaLong</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.Long)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaObject</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(Object)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaRegExp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(RegExp)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaString</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(String)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaSymbol</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+  constructor :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>(MongoDB.Symbol)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaUntyped</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaPrimitive</span></span>
+
+_primitive_schemas = [
+  SchemaBoolean
+  SchemaBinary
+  SchemaCode
+  SchemaDate
+  SchemaDBRef
+  SchemaDouble
+  SchemaFloat
+  SchemaInteger
+  SchemaLong
+  SchemaObject
+  SchemaRegExp
+  SchemaString
+  SchemaSymbol
+  SchemaUntyped
+]
+
+<span class="hljs-function"><span class="hljs-title">_schemaTypeForPrimitive</span> = <span class="hljs-params">(()-&gt;
+  _primitive_types = _primitive_schemas.map((PS)-&gt;
+    ps = <span class="hljs-keyword">new</span> PS()
+    ps.Type
+  )
+  
+  (_Type)-&gt;
+    index = _primitive_types.indexOf(_Type)
+    <span class="hljs-keyword">if</span> (index <span class="hljs-keyword">is</span> -<span class="hljs-number">1</span>)
+      <span class="hljs-literal">null</span>
+    <span class="hljs-keyword">else</span>
+      _primitive_schemas[index]
+)()</span>
+
+<span class="hljs-title">_checkPrimitiveSchemaType</span> = <span class="hljs-params">(SchemaType)</span>-&gt;</span>
+  <span class="hljs-keyword">if</span> (SchemaType <span class="hljs-keyword">in</span> _primitive_schemas)
+    <span class="hljs-keyword">return</span> SchemaType
+
+  PrimitiveSchemaType = _schemaTypeForPrimitive(SchemaType)
+  
+  <span class="hljs-keyword">if</span> PrimitiveSchemaType
+    PrimitiveSchemaType
+  <span class="hljs-keyword">else</span>
+    <span class="hljs-literal">null</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaReference</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span></span>
+  constructor : <span class="hljs-function"><span class="hljs-params">(data)</span>-&gt;</span>
+    <span class="hljs-property">@Model</span>      = data.model
+    <span class="hljs-property">@attributes</span> = data.attributes
+
+  cast : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> Type.instance(obj, ReferenceModel)
+      <span class="hljs-keyword">unless</span> Type.instance(obj.Model, <span class="hljs-property">@Model</span>)
+        throwError(<span class="hljs-string">"Can't cast reference of type <span class="hljs-subst">#{obj.Model.name}</span> to <span class="hljs-subst">#{<span class="hljs-property">@Model</span>.name}</span>"</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>this is probably overkill</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      obj.attributes = <span class="hljs-property">@attributes</span>
+      <span class="hljs-keyword">return</span> obj
+
+    <span class="hljs-keyword">unless</span> Type.instance(obj, <span class="hljs-property">@Model</span>)
+      obj = <span class="hljs-keyword">new</span> <span class="hljs-property">@Model</span>(obj)
+      
+    obj.reference(<span class="hljs-property">@attributes</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2 id="schema">Schema</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>this is the object that gets exported and whose
+constructor gets called via Model</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Schema</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span>  </span>
+  constructor : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>()
+
+    schema   = args.schema
+    <span class="hljs-property">@Model</span>   = args.model
+
+    <span class="hljs-property">@processed_schema</span> = <span class="hljs-property">@_process</span>(schema)
+
+  _config : {
+    strict : <span class="hljs-literal">false</span>
+  }
+
+  config : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    <span class="hljs-keyword">for</span> k,v <span class="hljs-keyword">of</span> args
+      <span class="hljs-keyword">unless</span> (k <span class="hljs-keyword">of</span> <span class="hljs-property">@_config</span>)
+        valid_attrs = Object.keys(<span class="hljs-property">@_config</span>).join(<span class="hljs-string">', '</span>)
+        msg = <span class="hljs-string">"Invalid config attribute: <span class="hljs-subst">#{k}</span>. Valid attributes are <span class="hljs-subst">#{valid_attrs}</span>"</span>
+        throwError(msg)
+
+      <span class="hljs-property">@_config</span>[k] = v
+
+  _process : <span class="hljs-function"><span class="hljs-params">(spec)</span>-&gt;</span>
+    processed = {}
+
+    <span class="hljs-function"><span class="hljs-title">_throwError</span> = <span class="hljs-params">(attr)</span>-&gt;</span>
+      throwError(<span class="hljs-string">"Invalid schema type for field: <span class="hljs-subst">#{attr}</span>"</span>)
+    
+    <span class="hljs-keyword">for</span> attr, SchemaType <span class="hljs-keyword">of</span> spec
+      <span class="hljs-keyword">unless</span> SchemaType
+        _throwError(attr)
+
+      processed[attr] = <span class="hljs-keyword">if</span> Array.isArray(SchemaType)
+        <span class="hljs-keyword">if</span> (SchemaType.length <span class="hljs-keyword">is</span> <span class="hljs-number">0</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>if schema value is an Array with no arguments 
+create an untyped array that doesn’t cast</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">new</span> SchemaUntypedArray()
+        
+        <span class="hljs-keyword">else</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>if schema value is Array with single value, assume 
+that value is the type, and cast using it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          SchemaType = <span class="hljs-property">@_processAtom</span>(SchemaType[<span class="hljs-number">0</span>])
+          <span class="hljs-keyword">unless</span> SchemaType
+            _throwError(attr)
+          <span class="hljs-keyword">new</span> SchemaTypedArray(SchemaType)  
+      
+      <span class="hljs-keyword">else</span>
+        schema = <span class="hljs-property">@_processAtom</span>(SchemaType)
+
+        <span class="hljs-keyword">unless</span> schema
+          _throwError(attr)
+
+        schema
+    
+    processed</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>atoms are models, primitive schemas or primitive types  </p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  _processAtom : <span class="hljs-function"><span class="hljs-params">(SchemaType)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> (SchemaType <span class="hljs-keyword">is</span> <span class="hljs-literal">undefined</span>) 
+      <span class="hljs-literal">null</span>
+
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> Type(SchemaType, SchemaReference)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>TODO : standardize so Reference constructor called here?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      SchemaType
+
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> Type.extension(SchemaType, SchemaID)
+      <span class="hljs-keyword">new</span> SchemaType()
+
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> Type.extension(SchemaType, BaseModel)
+      SchemaType._schema
+
+    <span class="hljs-keyword">else</span>
+      PrimitiveType = _checkPrimitiveSchemaType(SchemaType)
+      <span class="hljs-keyword">if</span> PrimitiveType 
+        <span class="hljs-keyword">new</span> PrimitiveType()
+      <span class="hljs-keyword">else</span>
+        <span class="hljs-literal">null</span>
+  
+  isType : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    Type(obj, <span class="hljs-property">@Model</span>)
+
+  cast : <span class="hljs-function"><span class="hljs-params">(obj)</span>=&gt;</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-property">@isType</span>(obj)
+      <span class="hljs-keyword">return</span> obj
+
+    data = {}
+
+    <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> obj
+      <span class="hljs-keyword">if</span> <span class="hljs-property">@processed_schema</span>.hasOwnProperty(k)
+        schema = <span class="hljs-property">@processed_schema</span>[k]
+
+        <span class="hljs-keyword">unless</span> (schema <span class="hljs-keyword">instanceof</span> SchemaBase)
+          throwError(<span class="hljs-string">"Invalid schema for <span class="hljs-subst">#{k}</span>: <span class="hljs-subst">#{schema}</span>"</span>)
+        
+        <span class="hljs-keyword">try</span>
+          data[k] = <span class="hljs-keyword">if</span> Type(schema, Schema)
+            Model = schema.Model
+            <span class="hljs-keyword">if</span> Type(v, Model)
+              v
+            <span class="hljs-keyword">else</span>
+              <span class="hljs-keyword">new</span> Model(v)
+          <span class="hljs-keyword">else</span>
+            schema.cast(v)
+
+        <span class="hljs-keyword">catch</span> error
+          throwError(<span class="hljs-string">"<span class="hljs-subst">#{k}</span>: <span class="hljs-subst">#{error}</span>"</span>)
+                          
+      <span class="hljs-keyword">else</span>
+        <span class="hljs-keyword">unless</span> <span class="hljs-property">@_config</span>.strict
+          data[k] = v
+    
+    <span class="hljs-keyword">if</span> (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> <span class="hljs-property">@processed_schema</span>)
+      id = <span class="hljs-property">@processed_schema</span>._id
+
+      <span class="hljs-keyword">if</span> (id.auto <span class="hljs-keyword">and</span> (!(<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> data)))
+        data._id = id.generate(data)
+
+    data
+
+  attribute : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>
+    [first, rest] = utils.shiftPath(path)
+    next = <span class="hljs-property">@processed_schema</span>[first]
+
+    <span class="hljs-keyword">if</span> rest
+      next.attribute(rest)
+    <span class="hljs-keyword">else</span>
+      next
+    
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaTypedArray</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span></span>
+  constructor : <span class="hljs-function"><span class="hljs-params">(<span class="hljs-property">@Type</span>)</span>-&gt;</span>
+    <span class="hljs-keyword">super</span>()
+
+  cast : <span class="hljs-function"><span class="hljs-params">(values)</span>-&gt;</span>
+    <span class="hljs-keyword">unless</span> Array.isArray(values)
+      throwError(<span class="hljs-string">"Expecting array"</span>)
+    
+    values.map<span class="hljs-function"><span class="hljs-params">((value)=&gt;
+      <span class="hljs-keyword">unless</span> <span class="hljs-property">@Type</span>.isType(value)
+        <span class="hljs-keyword">if</span> Type(<span class="hljs-property">@Type</span>, Schema)
+          Model = <span class="hljs-property">@Type</span>.Model
+          <span class="hljs-keyword">new</span> Model(value)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-property">@Type</span>.cast(value)
+      <span class="hljs-keyword">else</span>
+        value
+    )</span>
+  
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>TODO : should test type of the subelements?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  isType : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    Array.isArray(obj)
+
+  attribute : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>
+    parts = utils.splitPath(path)
+    first = parts.shift()
+
+    <span class="hljs-keyword">if</span> isNaN(first)
+      throwError(<span class="hljs-string">"Missing array index"</span>)
+    <span class="hljs-keyword">else</span>
+      first = parts.shift() <span class="hljs-comment"># get next part (skip the array index)</span>
+      next = <span class="hljs-property">@Type</span>.attribute(first)
+
+      <span class="hljs-keyword">if</span> (parts.length &gt; <span class="hljs-number">0</span>)
+        next.attribute(parts)
+      <span class="hljs-keyword">else</span>
+        next
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SchemaUntypedArray</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaBase</span></span>
+  cast : <span class="hljs-function"><span class="hljs-params">(values)</span>-&gt;</span>
+    <span class="hljs-keyword">unless</span> Array.isArray(values)
+      throwError(<span class="hljs-string">"Expecting array for key:<span class="hljs-subst">#{k}</span>"</span>)
+    values
+    
+  isType : <span class="hljs-function"><span class="hljs-params">(obj)</span>-&gt;</span>
+    Array.isArray(obj)
+
+  attribute : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> isNaN(first)
+      throwError(<span class="hljs-string">"Missing array index"</span>)
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-literal">null</span>
+
+
+Schema.Reference    = SchemaReference
+Schema.ObjectID     = SchemaObjectID
+Schema.ID           = makeSchemaID
+Schema.Primitive    = SchemaPrimitive
+Schema.Base         = SchemaBase
+Schema.TypedArray   = SchemaTypedArray
+Schema.UntypedArray = SchemaUntypedArray</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>attach the primitive schemas to Schemas</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">for</span> primitive <span class="hljs-keyword">in</span> _primitive_schemas
+  Schema[primitive.name.replace(<span class="hljs-regexp">/^Schema/</span>, <span class="hljs-string">''</span>)] = primitive
+
+<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = Schema</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

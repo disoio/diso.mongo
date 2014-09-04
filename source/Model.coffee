@@ -1,21 +1,59 @@
+# NPM dependencies
+# ------------------
+# [mongodb](https://github.com/mongodb/node-mongodb-native)  
+# [mongojs](https://github.com/mafintosh/mongojs)  
+# [type-of-is](https://github.com/stephenhandley/type-of-is)  
 MongoDB = require('mongodb')
 MongoJS = require('mongojs')
 Type    = require('type-of-is')
 
-BaseModel = require('./BaseModel')
-DataModel = require('./DataModel')
-Schema    = require('./Schema')
-utils     = require('./utils')
+# Local dependencies
+# ------------------
+# [BaseModel](./BaseModel.html)  
+# [DataModel](./DataModel.html)  
+# [ReferenceModel](./ReferenceModel.html)  
+# [Schema](./Schema.html)  
+# [utils](./utils.html)
+BaseModel      = require('./BaseModel')
+DataModel      = require('./DataModel')
+ReferenceModel = require('./ReferenceModel')
+Schema         = require('./Schema')
+utils          = require('./utils')
 
+# convenience method for throwing prefixed errors
+throwError = (msg)->
+  throw new Error("diso.mongo.Model: #{msg}")
+
+# Model
+# =====
+# Extends [DataModel](./DataModel.html) with persistence related 
+# methods, most of which delegate to [mongojs](https://github.com/mafintosh/mongojs)
+# TODO: remove mongojs, and go direct to [mongodb](https://github.com/mongodb/node-mongodb-native)
+#       so can have better access to write concerns sharding etc. 
 class Model extends DataModel
-  # required, mongodb url for db
+  # MongoDB url for the database where this model is stored
+  # required
   @db_url : null
 
-  # optional, otherwise collection will be underscorized 
-  # child class/constructor name
+  # Collection name defaults to the underscorized class name
+  # of the model i.e. BarfMuseum => barf_museum
   @collection_name : null
-  @_collection : null
 
+  # Model.schema
+  # ------------
+  # Called in the child with an object representing this object's
+  # properties. See [Schema](./Schema.html) for a description of 
+  # available Schema types 
+  #
+  # ```coffeescript
+  # class Barf extends Model
+  #   @schema({
+  #     name     : Schema.String
+  #     age      : Schema.Integer
+  #     contents : [Food]
+  #     owner    : Person
+  #   })
+  # ```
   @schema : (schema)->
     # Ensure that schema has an _id attribute
     unless ('_id' of schema)
@@ -24,84 +62,175 @@ class Model extends DataModel
     super(schema)
 
   # Class method for accessing the backing mongodb collection
+
+  # memoized collection class attr
+  @_collection : null
+
+  # @collection
+  # -----------
+  # retrieves the MongoJS collection backing this model 
   @collection: ()->
-    # finds collection with @collection_name defined in child
-    # otherwise defaults to underscorized child class name
     unless @_collection
-      collection_name = @collection_name ? utils.underscorize(@name)
+      unless @db_url
+        throwError("#{@name} is missing required db_url")
+      
       db = MongoJS(@db_url)
+
+      collection_name = @collection_name || utils.underscorize(@name)
       @_collection = db.collection(collection_name)
-    
+
     @_collection
   
-  # Find an instance of this model, given criteria
-  @find: (opts)->
-    if ('id' of opts)
-      id = opts.id
-      delete opts.id
+  # @find
+  # ----------
+  # Find models that match a given query
+  #
+  # ```coffeescript
+  # Barf.find(
+  #   query : {
+  #     name   : "pizza"
+  #     volume : {
+  #       $gt : 100
+  #     }
+  #   }
+  #   callback : (error, barfs)->
+  #     console.log('got some barfs')
+  # )
+  # ```
+  #
+  # Also allows for shorthand when finding by _id
+  # ```coffeescript
+  # Barf.find(
+  #   _id      : "SOME_ID_HEEERE"
+  #   callback : (error, barf)->
+  #     console.log('a barf')
+  # )
+  # ```
+  @find: (args)->
+    # This method delegates to _findHelper defined below
+    args.method = 'find'
 
-      # TODO: support alias
-      
-      if Type(id, String)
-        id = new MongoDB.ObjectID(id)
+    # support _id options for common case of finding by _id  
+    # TODO: support _id schema aliases
+    if ('_id' of args)
 
-      opts.query = { _id : id }
+      _id = args._id
+      delete args._id
 
-    opts.method = 'find'
-    @_findHelper(opts)
+      args.query = { _id : _id }
+      args.method = 'findOne'
+
+    @_findHelper(args)
   
-  @findOne: (opts)->
-    opts.method = 'findOne'
-    @_findHelper(opts)
+  # @findOne
+  # --------
+  # Find one model that matches a given query 
+  @findOne: (args)->
+    args.method = 'findOne'
+    @_findHelper(args)
   
-  @_findHelper: (opts)->
-    _Model = @
+  # @_findHelper
+  # ------------
+  # Helper method for finders
+  @_findHelper: (args)->
+    method     = args.method
+    query      = args.query
+    callback   = args.callback
+    projection = args.projection || {}
 
-    method     = opts.method
-    query      = opts.query
-    callback   = opts.callback
-    projection = opts.projection || {}
+    # convert _id strings to ObjectIDs 
+    id_is_string = Type(query._id, String)
+    wants_object_id = Type(@_schema.attribute('_id'), Schema.ObjectID)
+    if (id_is_string and wants_object_id)
+      query._id = new MongoDB.ObjectID(query._id)
     
-    @collection()[method](query, projection, (error, result)->
-      if error
-        return callback(error, null)
-
-      models = if Type(result, Array)
-        new _Model(doc) for doc in result
-      else
-        if result
-          new _Model(result)
+    @collection()[method](query, projection, (error, results)=>
+      # Map model constructor over arrays and
+      # directly on atom
+      unless error
+        results = if Type(results, Array)
+          new @(doc) for doc in results
         else
-          null
+          if results
+            new @(results)
+          else
+            null
 
-      callback(null, models)
+      callback(error, results)
     )
   
-  @findAndModify : (opts)->
-    callback = opts.callback
-    delete opts.callback
+  # @findAndModify
+  # --------------
+  # Find and modify models that match a given query
+  #
+  # ```coffeescript
+  # Barf.findAndModify(
+  #   query : {
+  #     state : 'barfing'
+  #   }
+  #   update : {
+  #     $set  : { 
+  #       state   : 'still barfing'
+  #     }
+  #   }
+  #   new : true # means return the newly created model 
+  #   callback : (response)=>
+  #     console.log('got modified barf!')
+  # )
+  # ```
+  @findAndModify : (args)->
+    callback = args.callback
+    delete args.callback
 
-    @collection().findAndModify(opts, (error, doc, last_error)=>
-      if error 
-        return callback(error, null)
-      else 
-        model = if doc
-          new @(doc)
-        else
-          null
+    @collection().findAndModify(args, (error, doc, last_error)=>
+      model = null
+      if (!error and doc)
+        model = new @(doc)
 
-        callback(null, model)
+      callback(error, model)
     )
 
-  # find the count of instances satisfying given query (optional)
-  @count: (opts)->
-    @collection().count(opts.query || {}, opts.callback)
+  # @count
+  # ------
+  # Count models that match a given query
+  # 
+  # ```coffeescript
+  # Barf.count(
+  #   query : {
+  #     state : 'so barfing'
+  #   }
+  #   callback : (error, count)->
+  #     console.log(count)
+  # )
+  # ```
+  @count: (args)->
+    query    = args.query || {}
+    callback = args.callback
+    @collection().count(query, callback)
 
-  @update : (opts)->
-    query    = opts.query
-    update   = opts.update
-    callback = opts.callback
-    options  = opts.options || {}
+  # @update
+  # -------
+  # Update models matching a given query
+  # 
+  # ```coffeescript
+  # Barf.update(
+  #   query : {
+  #     state : 'barfing'
+  #   }
+  #   update : {
+  #     $set : {
+  #       state : 'so barfed'
+  #     }
+  #   }
+  #   callback : (error)->
+  #     console.log('hi')
+  # )
+  # ```
+  @update : (args)->
+    query    = args.query
+    update   = args.update
+    callback = args.callback
+    options  = args.options || {}
     
     @collection().update(query, update, options, callback)
 
@@ -126,8 +255,11 @@ class Model extends DataModel
   # either an array or a single object to insert as its first 
   # argument. we map it/them to an model objects and then 
   # call .data to get the underlying data to insert
-  @insert : (opts)->
-    models = @makeOneOrMany(opts.data)
+  @insert : (args)->
+    data     = args.data
+    callback = args.callback
+
+    models = @makeOneOrMany(data)
     
     data = if Type(models, Array)
      (m.data() for m in models)
@@ -135,12 +267,14 @@ class Model extends DataModel
       models.data()
 
     @collection().insert(data, (error, docs)=>
-      result = null
       unless error
-        result = @makeOneOrMany(docs)
+        docs = @makeOneOrMany(docs)
 
-      opts.callback(error, result)
+      callback(error, docs)
     )
+
+  id : ()->
+    @_id
 
   insert : (callback)->
     @constructor.insert(
@@ -148,21 +282,23 @@ class Model extends DataModel
       callback : callback
     )
 
+  update : (args)->
+    args.query = { _id : @_id }
+    @constructor.update(args)
+
   save: (callback)->
     if @beforeSave
       @beforeSave()
 
     error = @validate()
     if error
-      return process.nextTick(()-> 
-        callback(error, null)
-      )
+      return callback(error)
 
     collection = @constructor.collection()
 
-    collection.save(@data(), (error, document)=>
-      if (document and not error)
-        @_id = document._id
+    collection.save(@data(), (error, doc)=>
+      if (!error and doc)
+        @_id = doc._id
 
       callback(error)
     )
@@ -176,19 +312,17 @@ class Model extends DataModel
     unless Type(attributes, Array)
       attributes = [attributes]
 
-    ref = {}
-
-    for attr in attributes
-      ref[attr] = @_dataPath(attr)
-
-    ref
+    new ReferenceModel(
+      model      : @
+      attributes : attributes
+    )
 
   @reference : (attributes)->
     if attributes
       unless Type(attributes, Array)
         attributes = [attributes]
     else
-      attributes = ['_id']
+      throwError("Must specify attributes to reference")
 
     new Schema.Reference(
       model      : @

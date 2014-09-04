@@ -1,8 +1,9 @@
 MongoDB = require('mongodb')
 Type    = require('type-of-is')
 
-BaseModel = require('./BaseModel')
-utils     = require('./utils')
+BaseModel      = require('./BaseModel')
+ReferenceModel = require('./ReferenceModel')
+utils          = require('./utils')
 
 throwError = (msg)->
   msg = "diso.mongo.Schema: #{msg}"
@@ -44,20 +45,20 @@ class SchemaID extends SchemaBase
   generate : ()->
     throwError("Must define generate method from SchemaID")
 
-makeSchemaID = (opts)->  
+makeSchemaID = (args)->  
   S = class extends SchemaID
 
-  PrimitiveSchemaType = _checkPrimitiveSchemaType(opts.type)
+  PrimitiveSchemaType = _checkPrimitiveSchemaType(args.type)
   if PrimitiveSchemaType
     S.prototype.Type = new PrimitiveSchemaType().Type
   else
     throwError("SchemaID type must be a Schema Primitive")
 
-  if ('alias' of opts)
-    S.prototype.alias = opts.alias
+  if ('alias' of args)
+    S.prototype.alias = args.alias
   
-  S.prototype.auto = if ('gen' of opts)
-    S.prototype.generate = opts.gen
+  S.prototype.auto = if ('gen' of args)
+    S.prototype.generate = args.gen
     true
   else
     false
@@ -74,6 +75,7 @@ class SchemaObjectID extends SchemaID
     new MongoDB.ObjectID()
 
   # hack temp
+  # TODO: fix dis
   isType : (obj)->
     Type.string(obj) is 'ObjectID'
 
@@ -193,12 +195,17 @@ class SchemaReference extends SchemaBase
     @attributes = data.attributes
 
   cast : (obj)->
-    unless Type.instance(obj, @Model)
-      try
-        obj = new @Model(obj)
-      catch error
-        throwError("Unable to create reference from object of type #{Type(obj)}")
+    if Type.instance(obj, ReferenceModel)
+      unless Type.instance(obj.Model, @Model)
+        throwError("Can't cast reference of type #{obj.Model.name} to #{@Model.name}")
 
+      # this is probably overkill
+      obj.attributes = @attributes
+      return obj
+
+    unless Type.instance(obj, @Model)
+      obj = new @Model(obj)
+      
     obj.reference(@attributes)
 
 
@@ -209,11 +216,11 @@ class SchemaReference extends SchemaBase
 # constructor gets called via Model
 
 class Schema extends SchemaBase  
-  constructor : (opts)->
+  constructor : (args)->
     super()
 
-    schema   = opts.schema
-    @Model   = opts.model
+    schema   = args.schema
+    @Model   = args.model
 
     @processed_schema = @_process(schema)
 
@@ -221,8 +228,8 @@ class Schema extends SchemaBase
     strict : false
   }
 
-  config : (opts)->
-    for k,v of opts
+  config : (args)->
+    for k,v of args
       unless (k of @_config)
         valid_attrs = Object.keys(@_config).join(', ')
         msg = "Invalid config attribute: #{k}. Valid attributes are #{valid_attrs}"

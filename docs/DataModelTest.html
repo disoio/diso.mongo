@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>DataModelTest.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="BaseModel.html">
+                BaseModel.coffee
+              </a>
+            
+              
+              <a class="source" href="DataModel.html">
+                DataModel.coffee
+              </a>
+            
+              
+              <a class="source" href="EmbeddedModel.html">
+                EmbeddedModel.coffee
+              </a>
+            
+              
+              <a class="source" href="Model.html">
+                Model.coffee
+              </a>
+            
+              
+              <a class="source" href="ReferenceModel.html">
+                ReferenceModel.coffee
+              </a>
+            
+              
+              <a class="source" href="Schema.html">
+                Schema.coffee
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.coffee
+              </a>
+            
+              
+              <a class="source" href="DataModelTest.html">
+                DataModelTest.coffee
+              </a>
+            
+              
+              <a class="source" href="PersistenceTest.html">
+                PersistenceTest.coffee
+              </a>
+            
+              
+              <a class="source" href="test.html">
+                test.coffee
+              </a>
+            
+              
+              <a class="source" href="utils.html">
+                utils.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>DataModelTest.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Type    = <span class="hljs-built_in">require</span>(<span class="hljs-string">'type-of-is'</span>)
+Assert  = <span class="hljs-built_in">require</span>(<span class="hljs-string">'assert'</span>)
+Asserts = <span class="hljs-built_in">require</span>(<span class="hljs-string">'asserts'</span>)
+
+Mongo         = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../../'</span>)
+Model         = Mongo.Model
+EmbeddedModel = Mongo.EmbeddedModel
+Schema        = Mongo.Schema
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Food</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    name : Schema.String
+  })
+    
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Barf</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+  <span class="hljs-property">@db_url</span> : <span class="hljs-string">"mongodb://localhost/disomongotest"</span>
+
+  <span class="hljs-property">@schema</span>({
+   target   : Schema.String
+   duration : Schema.Integer
+   contents : [Food]
+   viewers  : [Schema.Object]
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dorp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    won  : Schema.Boolean
+    time : Schema.Date
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Derp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    name : Schema.String
+    age  : Schema.Integer
+    dorp : Dorp
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Gort</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    honk : Schema.Integer
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Wonky</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    what  : Schema.String
+    why   : Schema.String
+    where : Schema.String
+    ok    : Schema.Boolean
+    gort  : Gort
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Cletus</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+  <span class="hljs-property">@schema</span>({
+    derp  : Derp
+    wonks : [Wonky]
+    name  : Schema.String
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Garth</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+  <span class="hljs-property">@schema</span>({
+    name : Schema.String
+  })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Wayne</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+  <span class="hljs-property">@schema</span>({
+    name : Schema.String
+  })
+
+<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = {
+
+  <span class="hljs-string">"DataModel"</span> : {
+    <span class="hljs-string">"should have .data method that"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+      gort = <span class="hljs-keyword">new</span> Gort({
+        honk : <span class="hljs-number">4</span>
+      })
+
+      cletus_jr = <span class="hljs-keyword">new</span> Cletus(
+        derp : {
+          name : <span class="hljs-string">"CLEAT"</span>
+          age  : <span class="hljs-number">100</span>
+          dorp : {
+            won  : <span class="hljs-literal">true</span>
+            time : <span class="hljs-keyword">new</span> Date()
+          }
+        }
+        wonks : [
+          {
+            what  : <span class="hljs-string">'a'</span>
+            why   : <span class="hljs-string">'b'</span>
+            where : <span class="hljs-string">'c'</span>
+            ok    : <span class="hljs-literal">true</span>
+            gort  : gort
+          }
+          {
+            what  : <span class="hljs-string">'abc'</span>
+            why   : <span class="hljs-string">'def'</span>
+            where : <span class="hljs-string">'ghi'</span>
+            ok    : <span class="hljs-literal">false</span>
+            gort  : gort
+          }
+        ]
+        name : <span class="hljs-string">"CLEATUS JR."</span>
+      )
+
+      {
+        <span class="hljs-string">"returns root attribute when passed string atom as argument"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          Assert.equal(cletus_jr.data(<span class="hljs-string">'name'</span>), <span class="hljs-string">"CLEATUS JR."</span>)
+
+        <span class="hljs-string">"returns nested attribute when passed string path as argument"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          Assert.equal(cletus_jr.data(<span class="hljs-string">'derp.dorp.won'</span>), <span class="hljs-literal">true</span>)
+          Assert.equal(cletus_jr.data(<span class="hljs-string">'wonks.0.where'</span>), <span class="hljs-string">'c'</span>)          
+
+        <span class="hljs-string">"returns object of requested attributes keyed by path when passed array of string paths"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          actual = cletus_jr.data([<span class="hljs-string">'derp.name'</span>, <span class="hljs-string">'wonks.1.where'</span>, <span class="hljs-string">'name'</span>])
+          expected = {
+            <span class="hljs-string">'derp.name'</span>     : <span class="hljs-string">'CLEAT'</span>
+            <span class="hljs-string">'wonks.1.where'</span> : <span class="hljs-string">'ghi'</span>, 
+            <span class="hljs-string">'name'</span>          : <span class="hljs-string">'CLEATUS JR.'</span>
+          }
+          Assert.deepEqual(actual, expected)
+
+        <span class="hljs-string">"updates root attribute when passed string atom and value as arguments"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          new_name = <span class="hljs-string">'CLEATUS SR.'</span>
+          cletus_jr.data(<span class="hljs-string">'name'</span>, new_name)
+          Assert.equal(cletus_jr.name, new_name)
+
+        <span class="hljs-string">"updates nested attribute when passed string path and value as arguments"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          new_derp_name = <span class="hljs-string">'CLEATTTTTT'</span>
+          cletus_jr.data(<span class="hljs-string">'derp.name'</span>, new_derp_name)
+          Assert.equal(cletus_jr.derp.name, new_derp_name)
+
+        <span class="hljs-string">"updates model data using all key value pairs when passed object as argument"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          c3  = <span class="hljs-string">'CLEATUS 3'</span>
+          c35 = <span class="hljs-string">'CLEATUS 3.5'</span>
+          cletus_jr.data({
+            <span class="hljs-string">'name'</span>      : c3
+            <span class="hljs-string">'derp.name'</span> : c35
+          })
+          Assert.equal(cletus_jr.name, c3)
+          Assert.equal(cletus_jr.derp.name, c35)
+          Assert.equal(cletus_jr.derp.age, <span class="hljs-number">100</span>)  <span class="hljs-comment">#old one should still be ok</span>
+
+        <span class="hljs-string">"returns object of underlying data when called with no arguments"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          id = cletus_jr._id
+          time = cletus_jr.derp.dorp.time
+
+          actual = cletus_jr.data()
+          expected = { 
+            derp : { 
+              name : <span class="hljs-string">'CLEATUS 3.5'</span>
+              age  : <span class="hljs-number">100</span>
+              dorp : { 
+                won  : <span class="hljs-literal">true</span>
+                time : time 
+              } 
+            }
+            <span class="hljs-attribute">wonks</span>: [
+              {
+                what  : <span class="hljs-string">'a'</span>
+                why   : <span class="hljs-string">'b'</span>
+                where : <span class="hljs-string">'c'</span>
+                ok    : <span class="hljs-literal">true</span>
+                gort  : {
+                  honk : <span class="hljs-number">4</span>
+                }
+              }
+              { 
+                what  : <span class="hljs-string">'abc'</span>
+                why   : <span class="hljs-string">'def'</span>
+                where : <span class="hljs-string">'ghi'</span>
+                ok    : <span class="hljs-literal">false</span> 
+                gort  : {
+                  honk : <span class="hljs-number">4</span>
+                }
+              }
+            ]
+            name : <span class="hljs-string">'CLEATUS 3'</span>,
+            _id  : id
+          }
+
+          Assert.deepEqual(actual, expected)
+      }
+
+      <span class="hljs-string">"should have .deflate method that"</span> : {
+        <span class="hljs-string">"returns structure like .data() with model names"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          foods = ((<span class="hljs-keyword">new</span> Food(name : name)) <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> [<span class="hljs-string">'taco'</span>, <span class="hljs-string">'pizza'</span>, <span class="hljs-string">'orange'</span>])
+          viewers = ({ name : name } <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> [<span class="hljs-string">'Jamie'</span>, <span class="hljs-string">'Eustace'</span>, <span class="hljs-string">'Delano'</span>])
+
+          barf = <span class="hljs-keyword">new</span> Barf(
+            target   : <span class="hljs-string">'there'</span>
+            duration : <span class="hljs-number">5000</span>
+            contents : foods
+            viewers  : viewers
+          )
+
+          _id = barf._id
+
+          actual = barf.deflate(model_key : <span class="hljs-string">'$model'</span>)
+
+          expected = {
+            target   : <span class="hljs-string">'there'</span>
+            duration : <span class="hljs-number">5000</span>
+            contents : [
+              {
+                name     : <span class="hljs-string">'taco'</span>
+                <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
+              }
+              { 
+                name     : <span class="hljs-string">'pizza'</span>
+                <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
+              }
+              { 
+                name     : <span class="hljs-string">'orange'</span>
+                <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
+              }
+            ]
+            <span class="hljs-attribute">viewers</span>: [
+              {
+                <span class="hljs-attribute">name</span>: <span class="hljs-string">'Jamie'</span>
+              }
+              { 
+                <span class="hljs-attribute">name</span>: <span class="hljs-string">'Eustace'</span>
+              }
+              { 
+                <span class="hljs-attribute">name</span>: <span class="hljs-string">'Delano'</span>
+              }
+            ]
+            _id      : _id,
+            <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Barf'</span>
+          }
+
+          Assert.deepEqual(actual, expected)
+        
+      }
+ 
+
+    <span class="hljs-string">"that has invalid schema"</span>: {
+      <span class="hljs-string">"should throw error"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+        Assert.throws<span class="hljs-function"><span class="hljs-params">((()-&gt;
+          class InvalidSchemaModel extends Model
+            <span class="hljs-property">@schema</span>({
+              something: Schema.not_defined
+            })
+        ), <span class="hljs-regexp">/Invalid schema type/</span>)</span>
+    }
+
+    "<span class="hljs-title">that</span> <span class="hljs-title">has</span> <span class="hljs-title">valid</span> <span class="hljs-title">schema</span>": <span class="hljs-params">()</span>-&gt;</span>
+      {
+        <span class="hljs-string">"and invalid data should"</span> : {
+          <span class="hljs-string">"throw error when schema expects array and given atom"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+            Assert.throws<span class="hljs-function"><span class="hljs-params">((()-&gt;
+              b = <span class="hljs-keyword">new</span> Barf(
+                target   : <span class="hljs-string">"somewhere"</span>
+                duration : <span class="hljs-number">1000</span>
+                contents : <span class="hljs-keyword">new</span> Food()
+                viewers  : [{name : <span class="hljs-string">'Derp'</span>}]
+              )
+            ), <span class="hljs-regexp">/Expecting array/</span>)</span>
+        }
+        
+        "<span class="hljs-title">and</span> <span class="hljs-title">valid</span> <span class="hljs-title">data</span> <span class="hljs-title">should</span>": <span class="hljs-params">()</span>-&gt;</span>      
+          somewhere = <span class="hljs-string">"somewhere"</span>
+          one_thousand = <span class="hljs-number">1000</span>
+          pizza = <span class="hljs-string">"pizza"</span>
+
+          b = <span class="hljs-keyword">new</span> Barf(
+            target   : somewhere
+            duration : one_thousand
+            contents : [<span class="hljs-keyword">new</span> Food(name : pizza), <span class="hljs-keyword">new</span> Food(name : <span class="hljs-string">"soup"</span>)]
+            viewers  : [
+              {name : <span class="hljs-string">'Al'</span>}
+              {name : <span class="hljs-string">'Jen'</span>}
+            ]
+          )
+
+          {
+            <span class="hljs-string">"properly define getters for schema attributes"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+              Assert.equal(b.target, somewhere)
+              Assert.equal(b.duration, one_thousand)
+
+            <span class="hljs-string">"properly define setters for schema attributes"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+              elsewhere = <span class="hljs-string">"elsewhere"</span>
+              b.target = elsewhere
+              Assert.equal(b.target, elsewhere)
+            
+            <span class="hljs-string">"properly handle typed arrays"</span> : {
+              <span class="hljs-string">"containing models by having "</span> : {
+                <span class="hljs-string">"correct types"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+                  pizza_food = b.contents[<span class="hljs-number">0</span>]
+                  Assert.equal(pizza_food.name, pizza)
+                  Assert(Type(pizza_food, Food))
+                  Assert(Type.instance(pizza_food, EmbeddedModel))
+
+                <span class="hljs-string">"functioning accessors"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+                  path = <span class="hljs-string">"contents.1.name"</span>
+                  Assert.equal(b.get(path), <span class="hljs-string">'soup'</span>)
+                  new_val = <span class="hljs-string">'bbq'</span>
+                  b.set(path, new_val)
+                  Assert.equal(b.contents[<span class="hljs-number">1</span>].name, new_val)
+                  Assert.equal(b.get(path), new_val)
+              }
+
+              <span class="hljs-string">"with plain objects by having"</span> : {
+                <span class="hljs-string">"correct types"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+                  al = b.viewers[<span class="hljs-number">0</span>]
+                  Assert.equal(al.name, <span class="hljs-string">'Al'</span>)
+                  Assert(Type(al, Object))
+
+                <span class="hljs-string">"functioning accessors"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+                  path = <span class="hljs-string">"viewers.0.name"</span>
+                  new_val = <span class="hljs-string">'Dorf'</span>
+                  Assert.equal(b.get(path), <span class="hljs-string">'Al'</span>)
+                  b.set(path, new_val)
+                  Assert.equal(b.get(path), new_val)
+              }
+            }
+        }
+      }
+
+    <span class="hljs-string">"that has schema containing reference"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+      <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+        <span class="hljs-property">@db_url</span> : <span class="hljs-string">"mongodb://localhost/disomongotest"</span>
+
+        <span class="hljs-property">@schema</span>({
+          name  : Schema.String
+          email : Schema.String
+          brain : Schema.Boolean
+        })
+
+      user_ref_attrs = [<span class="hljs-string">'_id'</span>, <span class="hljs-string">'name'</span>]
+          
+      <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+        <span class="hljs-property">@db_url</span> : <span class="hljs-string">"mongodb://localhost/disomongotest"</span>
+
+        <span class="hljs-property">@schema</span>({
+         barf : Schema.String
+         user : User.reference(user_ref_attrs)
+        })
+
+
+      fart = <span class="hljs-keyword">new</span> User(
+        name  : <span class="hljs-string">"FART"</span>
+        email : <span class="hljs-string">"fart@fart.gov"</span>
+        brain : <span class="hljs-literal">true</span> 
+      )
+
+      fartropolis = <span class="hljs-keyword">new</span> Person(
+        barf : <span class="hljs-string">"YES!"</span>
+        user : fart
+      )
+
+      {
+        <span class="hljs-string">"should have expected model attributes proxied in reference"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          fuser = fartropolis.user
+
+          Assert.equal(fart.name, fuser.name)
+          Assert.equal(fart._id, fuser._id)
+          Assert.equal(fart.email, fuser.email)
+          Assert.equal(fart.brain, fuser.brain)
+
+        <span class="hljs-string">"should have only reference attributes in .data"</span> :<span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          expected = {
+            barf : <span class="hljs-string">"YES!"</span>
+            _id  : fartropolis._id
+            user : {
+              _id  : fart._id
+              name : <span class="hljs-string">"FART"</span> 
+            }
+          }
+
+          actual = fartropolis.data()
+          Assert.deepEqual(expected, actual)
+
+        <span class="hljs-string">"should have .data method on reference that proxies to model"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+          fart_name = fartropolis.user.data(<span class="hljs-string">'name'</span>)
+          Assert.equal(fart_name, <span class="hljs-string">"FART"</span>)
+
+          fart_deets = fartropolis.user.data([<span class="hljs-string">'name'</span>, <span class="hljs-string">'email'</span>])
+          fart_deets_expected = {
+            name  : <span class="hljs-string">'FART'</span>
+            email : <span class="hljs-string">'fart@fart.gov'</span>
+          }
+          Assert.deepEqual(fart_deets, fart_deets_expected)
+      }
+  }
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

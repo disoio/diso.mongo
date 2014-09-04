@@ -181,104 +181,58 @@ module.exports = {
           Assert.deepEqual(actual, expected)
       }
 
-    "should have instance and class .deflate methods that" : {
+      "should have .deflate method that" : {
+        "returns structure like .data() with model names" : ()->
+          foods = ((new Food(name : name)) for name in ['taco', 'pizza', 'orange'])
+          viewers = ({ name : name } for name in ['Jamie', 'Eustace', 'Delano'])
 
-      "return structure like .data() but with $model names when called on instance" : ()->
-        foods = ((new Food(name : name)) for name in ['taco', 'pizza', 'orange'])
-        viewers = ({ name : name } for name in ['Jamie', 'Eustace', 'Delano'])
+          barf = new Barf(
+            target   : 'there'
+            duration : 5000
+            contents : foods
+            viewers  : viewers
+          )
 
-        barf = new Barf(
-          target   : 'there'
-          duration : 5000
-          contents : foods
-          viewers  : viewers
-        )
+          _id = barf._id
 
-        _id = barf._id
+          actual = barf.deflate(model_key : '$model')
 
-        actual = barf.deflate()
-
-        expected = {
-          target   : 'there'
-          duration : 5000
-          contents : [
-            {
-              name     : 'taco'
-              '$model' : 'Food'
-            }
-            { 
-              name     : 'pizza'
-              '$model' : 'Food'
-            }
-            { 
-              name     : 'orange'
-              '$model' : 'Food'
-            }
-          ]
-          viewers: [
-            {
-              name: 'Jamie'
-            }
-            { 
-              name: 'Eustace'
-            }
-            { 
-              name: 'Delano'
-            }
-          ]
-          _id      : _id,
-          '$model' : 'Barf'
-        }
-
-        Assert.deepEqual(actual, expected)
-
-      "walk objects and arrays and call instance method on models in them when called via class" : ()->
-        garth1 = new Garth(name: 'garth!')
-        wayne1 = new Wayne(name: 'wayne!')
-        garth2 = new Garth(name : 'garth2!')
-        wayne2 = new Wayne(name : 'wayne2!')
-
-        obj = {
-          something : 'else'
-          list : [garth1, wayne1]
-          garth2 : garth2
-          dorf : {
-            wayne2 : wayne2
+          expected = {
+            target   : 'there'
+            duration : 5000
+            contents : [
+              {
+                name     : 'taco'
+                '$model' : 'Food'
+              }
+              { 
+                name     : 'pizza'
+                '$model' : 'Food'
+              }
+              { 
+                name     : 'orange'
+                '$model' : 'Food'
+              }
+            ]
+            viewers: [
+              {
+                name: 'Jamie'
+              }
+              { 
+                name: 'Eustace'
+              }
+              { 
+                name: 'Delano'
+              }
+            ]
+            _id      : _id,
+            '$model' : 'Barf'
           }
-        }
 
-        actual = Model.deflate(obj)
+          Assert.deepEqual(actual, expected)
         
-        expected = { 
-          something: 'else'
-          list: [
-            {
-              name     : 'garth!'
-              _id      : garth1._id
-              '$model' : 'Garth'
-            }
-            {
-              name     : 'wayne!'
-              _id      : wayne1._id
-              '$model' : 'Wayne'
-            }
-          ]
-          garth2: {
-            name     : 'garth2!'
-            _id      : garth2._id
-            '$model' : 'Garth'
-          }
-          dorf: {
-            wayne2: { 
-              name     : 'wayne2!',
-              _id      : wayne2._id,
-              '$model' : 'Wayne'
-            } 
-          }
-        }
-
-        Assert.deepEqual(actual, expected)
-    }
+      }
+ 
 
     "that has invalid schema": {
       "should throw error" : ()->
@@ -370,6 +324,7 @@ module.exports = {
         @schema({
           name  : Schema.String
           email : Schema.String
+          brain : Schema.Boolean
         })
 
       user_ref_attrs = ['_id', 'name']
@@ -383,23 +338,49 @@ module.exports = {
         })
 
 
+      fart = new User(
+        name  : "FART"
+        email : "fart@fart.gov"
+        brain : true 
+      )
+
+      fartropolis = new Person(
+        barf : "YES!"
+        user : fart
+      )
+
       {
-        "should have expected attributes in reference" : ()->
-          fart = new User(
-            name : "FART"
-          )
+        "should have expected model attributes proxied in reference" : ()->
+          fuser = fartropolis.user
 
-          fartropolis = new Person(
+          Assert.equal(fart.name, fuser.name)
+          Assert.equal(fart._id, fuser._id)
+          Assert.equal(fart.email, fuser.email)
+          Assert.equal(fart.brain, fuser.brain)
+
+        "should have only reference attributes in .data" :()->
+          expected = {
             barf : "YES!"
-            user : fart
-          )
+            _id  : fartropolis._id
+            user : {
+              _id  : fart._id
+              name : "FART" 
+            }
+          }
 
-          user = fartropolis.user
-          user_keys = Object.keys(user)
-          Assert.equal(user_keys.length, 2)
-          for k in user_ref_attrs
-            Assert(k of user)
+          actual = fartropolis.data()
+          Assert.deepEqual(expected, actual)
 
+        "should have .data method on reference that proxies to model" : ()->
+          fart_name = fartropolis.user.data('name')
+          Assert.equal(fart_name, "FART")
+
+          fart_deets = fartropolis.user.data(['name', 'email'])
+          fart_deets_expected = {
+            name  : 'FART'
+            email : 'fart@fart.gov'
+          }
+          Assert.deepEqual(fart_deets, fart_deets_expected)
       }
   }
 }

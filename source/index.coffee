@@ -1,28 +1,31 @@
-
-# _config = {}
-# 
-# config = (db_name=null)->
-#   if db_name
-#     if db_name of config
-#       return config[db_name]
-#     else
-#       throw "No config data for database named #{db_name}"
-#       
-#   else
-#     config
-#     
-# setConfig = (new_config)->
-#   config = new_config
-
+# NPM dependencies
+# ------------------
+# [mongodb](https://github.com/mongodb/node-mongodb-native)  
 MongoDB = require('mongodb')
-  
-  
+
+# Local dependencies
+# ------------------
+# [Model](./Model.html)  
+# [EmbeddedModel](./EmbeddedModel.html)  
+# [Schema](./Schema.html)  
+Model = require('./Model')
+EmbeddedModel = require('./EmbeddedModel')
+Schema = require('./Schema')
+
 module.exports = {
-  Schema        : require('./Schema')
-  Model         : require('./Model')
-  EmbeddedModel : require('./EmbeddedModel')
-  ObjectID      : MongoDB.ObjectID
+  # Represents a document in a MongoDB collection
+  Model : Model
+
+  # Represents a sub-document / object within a MongoDB document
+  EmbeddedModel : EmbeddedModel
+
+  # Used for specifying a Model's attributes
+  Schema : Schema
+
+  # Convenience export of MongoDB.ObjectID
+  ObjectID : MongoDB.ObjectID
   
+  # Hey Warren
   haveYouSeenMyBaseball : ()->
     false
 }
