@@ -7,7 +7,7 @@
       var k, v, _fn, _ref;
       this.model = args.model;
       this.attributes = args.attributes;
-      this.dereferenced = false;
+      this._dereferenced = false;
       _ref = this.model.constructor._schema.processed_schema;
       _fn = (function(_this) {
         return function(k) {
@@ -40,7 +40,7 @@
               return callback(error);
             } else {
               if (model) {
-                _this.dereferenced = true;
+                _this._dereferenced = true;
                 _this.model = model;
                 return callback(null, model);
               } else {
@@ -58,14 +58,12 @@
       return this.model.data.apply(this.model, args);
     };
 
-    ReferenceModel.prototype.deflate = function() {
-      return this.model._map({
-        $model: true
-      });
+    ReferenceModel.prototype.deflate = function(args) {
+      return this.model.deflate(args);
     };
 
     ReferenceModel.prototype._map = function(args) {
-      if (!this.dereferenced) {
+      if (!this._dereferenced) {
         args.attrs = this.attributes;
       }
       return this.model._map(args);
