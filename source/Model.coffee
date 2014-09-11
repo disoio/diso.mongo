@@ -64,8 +64,8 @@ class Model extends DataModel
     @_id
 
 
-  # SCHEMA METHODS
-  # --------------
+  # *SCHEMA METHODS*
+  # ----------------
 
   # @schema
   # ------------
@@ -131,8 +131,8 @@ class Model extends DataModel
     )
 
 
-  # LIFECYCLE METHODS
-  # -----------------
+  # *LIFECYCLE METHODS*
+  # -------------------
   
   # @find
   # ----------
@@ -442,8 +442,8 @@ class Model extends DataModel
     collection.remove(selector, {safe: true}, callback)
 
 
-  # INTERNAL METHODS
-  # ----------------
+  # *INTERNAL METHODS*
+  # ------------------
 
   # @_findHelper
   # ------------

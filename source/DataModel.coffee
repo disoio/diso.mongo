@@ -37,8 +37,8 @@ class DataModel extends BaseModel
   constructor: (data)->      
     @_data = @constructor.cast(data)
 
-  # SCHEMA METHODS
-  # --------------
+  # *SCHEMA METHODS*
+  # ----------------
 
   # @schema
   # -------
@@ -134,8 +134,8 @@ class DataModel extends BaseModel
     unless @attributeExists(attr)
       throwError("Missing attribute: #{attr}")
 
-  # DATA ACCESS METHODS
-  # -------------------
+  # *DATA ACCESS METHODS*
+  # ---------------------
   
   # data 
   # ----
@@ -225,8 +225,8 @@ class DataModel extends BaseModel
   get: (path)->
     @_dataPath(path)
 
-  # STUB METHODS
-  # ------------
+  # *STUB METHODS*
+  # --------------
 
   # validate
   # --------
@@ -236,8 +236,8 @@ class DataModel extends BaseModel
   validate: ()->
     return null
 
-  # INTERNAL METHODS
-  # ----------------
+  # *INTERNAL METHODS*
+  # ------------------
 
   # _map
   # ----

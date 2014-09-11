@@ -93,42 +93,9 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              
+              <h2 id="npm-dependencies">NPM dependencies</h2>
+
             </div>
-            
-            <div class="content"><div class='highlight'><pre>Type = <span class="hljs-built_in">require</span>(<span class="hljs-string">'type-of-is'</span>)
-
-PATH_SEPARATOR = <span class="hljs-string">'.'</span>
-
-<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = {
-  rmerge : <span class="hljs-function"><span class="hljs-params">(original, merge)</span>-&gt;</span>
-    <span class="hljs-keyword">for</span> k,v <span class="hljs-keyword">of</span> merge
-      <span class="hljs-keyword">unless</span> k <span class="hljs-keyword">of</span> original
-        original[k] = v
-        
-    original
-
-  omit : <span class="hljs-function"><span class="hljs-params">(object, keys)</span>-&gt;</span>
-    <span class="hljs-keyword">unless</span> Type(keys, Array)
-      keys = [keys]
-
-    res = {}
-    <span class="hljs-keyword">for</span> k,v <span class="hljs-keyword">of</span> object
-      <span class="hljs-keyword">unless</span> k <span class="hljs-keyword">in</span> keys
-        res[k] = v
-
-  underscorize : <span class="hljs-function"><span class="hljs-params">(str)</span>-&gt;</span>
-    result = str.replace(<span class="hljs-regexp">/([a-zA-Z])([0-9])/g</span>, <span class="hljs-string">'$1_$2'</span>)
-    result = result.replace(<span class="hljs-regexp">/([a-z0-9A-Z])([A-Z])/g</span>, <span class="hljs-string">'$1_$2'</span>)
-    result = result.replace(<span class="hljs-regexp">/\s/g</span>, <span class="hljs-string">'_'</span>)
-    result.toLowerCase()
-
-  splitPath : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>    
-    <span class="hljs-keyword">unless</span> Type(path, Array)
-      path = path.split(PATH_SEPARATOR)
-    path
-
-  shiftPath : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span></pre></div></div>
             
         </li>
         
@@ -139,21 +106,150 @@ PATH_SEPARATOR = <span class="hljs-string">'.'</span>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>TODO: be smarter about this</p>
+              <p><a href="https://github.com/stephenhandley/type-of-is">type-of-is</a>  </p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    split = <span class="hljs-property">@splitPath</span>(path)
-    first = split.shift()
-    rest = <span class="hljs-keyword">if</span> (split.length <span class="hljs-keyword">is</span> <span class="hljs-number">0</span>)
-      <span class="hljs-literal">null</span>
-    <span class="hljs-keyword">else</span>
-      split.join(PATH_SEPARATOR)
-      
-    [first, rest]
+            <div class="content"><div class='highlight'><pre>Type = <span class="hljs-built_in">require</span>(<span class="hljs-string">'type-of-is'</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>separator between elements in mongodb attribute path</p>
 
-  isAtomicPath : <span class="hljs-function"><span class="hljs-params">(path)</span>-&gt;</span>
-    Type(path, String) <span class="hljs-keyword">and</span> (path.indexOf(PATH_SEPARATOR) <span class="hljs-keyword">isnt</span> -<span class="hljs-number">1</span>)
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>PATH_SEPARATOR = <span class="hljs-string">'.'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2 id="underscorize">underscorize</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Convert AbcXyz to abc_xyz</p>
+<h3 id="required-args">required args</h3>
+<p><strong>str</strong> : the string to underscorize</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">underscorize</span> = <span class="hljs-params">(str)</span>-&gt;</span>
+  result = str.replace(<span class="hljs-regexp">/([a-zA-Z])([0-9])/g</span>, <span class="hljs-string">'$1_$2'</span>)
+  result = result.replace(<span class="hljs-regexp">/([a-z0-9A-Z])([A-Z])/g</span>, <span class="hljs-string">'$1_$2'</span>)
+  result = result.replace(<span class="hljs-regexp">/\s/g</span>, <span class="hljs-string">'_'</span>)
+  result.toLowerCase()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2 id="splitpath">splitPath</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Split a string on periods into array</p>
+<h3 id="required-args">required args</h3>
+<p><strong>path</strong> : path to split</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">splitPath</span> = <span class="hljs-params">(path)</span>-&gt;</span>    
+  <span class="hljs-keyword">unless</span> Type(path, Array)
+    path = path.split(PATH_SEPARATOR)
+  path</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h2 id="shiftpath">shiftPath</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Split a string on periods into array</p>
+<h3 id="required-args">required args</h3>
+<p><strong>path</strong> : path string or array to split</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">shiftPath</span> = <span class="hljs-params">(path)</span>-&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>TODO: be smarter about this implementation</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  split = <span class="hljs-property">@splitPath</span>(path)
+  first = split.shift()
+  rest = <span class="hljs-keyword">if</span> (split.length <span class="hljs-keyword">is</span> <span class="hljs-number">0</span>)
+    <span class="hljs-literal">null</span>
+  <span class="hljs-keyword">else</span>
+    split.join(PATH_SEPARATOR)
+    
+  [first, rest]
+
+<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = {
+  underscorize : underscorize 
+  splitPath    : splitPath
+  shiftPath    : shiftPath
 }</pre></div></div>
             
         </li>

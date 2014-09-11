@@ -15,7 +15,7 @@ module.exports = (grunt)->
     
     watch: {
       files: ['**/*.coffee']
-      tasks: ['coffee']
+      tasks: ['coffee', 'docco']
     }
 
     docco: {
