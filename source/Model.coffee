@@ -73,7 +73,6 @@ class Model extends DataModel
   # properties. See [Schema](./Schema.html) for a description of 
   # available Schema types 
   # 
-  # ### required args
   # **schema** : the schema for this model
   #
   # ### example
@@ -97,7 +96,7 @@ class Model extends DataModel
   # ----------
   # Used in schema definition to create a SchemaReference
   # to a model
-  # ### required args
+  #
   # **attributes** : the attributes to be denormalized and
   #                  stored in the reference subdocument
   #
@@ -137,14 +136,13 @@ class Model extends DataModel
   # @find
   # ----------
   # Find models that match a given query
-  # ### required args
+  #
   # **query** : the mongo query to run. Instead of query
   #             arg can specify **_id** to find by _id
   #
   # **callback** : called to return (error, result) 
   #
-  # ### optional args
-  # **projection** : subset of fields to find/populate
+  # *projection* : subset of fields to find/populate
   #
   # ### example
   # ```coffeescript
@@ -187,14 +185,12 @@ class Model extends DataModel
   # @findOne
   # --------
   # Find one model that matches a given query 
-  # ### required args
   # **query** : the mongo query to run. Instead of query
   #             arg can specify **_id** to find by _id
   #
   # **callback** : called to return (error, result) 
   #
-  # ### optional args
-  # **projection** : subset of fields to find/populate
+  # *projection* : subset of fields to find/populate
   #
   # ### example
   # ```coffeescript
@@ -209,15 +205,32 @@ class Model extends DataModel
   #     console.log('got a barf')
   # )
   # ```
-  @findOne: (args)->
+  @findOne : (args)->
     args.method = 'findOne'
     @_findHelper(args)
   
+  # @findAll
+  # --------
+  # Find all models in a collection
+  # 
+  # **callback** : called to return (error, result) 
+  #
+  # ### example
+  # ```coffeescript
+  # Barf.findAll(
+  #   callback : (error, barfs)->
+  #     console.log('got so many barf')
+  # )
+  # ```
+  @findAll : (args)->
+    args.method = 'find'
+    args.query  = {}
+    @_findHelper(args)
+    
   # @findAndModify
   # --------------
   # Find and modify models that match a given query
   #
-  # ### required args
   # **query** : mongo query to run
   # 
   # **update** : update to make to the model if found
@@ -257,7 +270,6 @@ class Model extends DataModel
   # ------
   # Count models that match a given query
   #
-  # ### required args
   # **query** : mongo query to run 
   # 
   # **callback** : called to return (error, count) 
@@ -281,7 +293,6 @@ class Model extends DataModel
   # -------
   # Update models matching a given query
   #
-  # ### required args
   # **query** : mongo query to run
   # 
   # **update** : update to make to the model
@@ -315,7 +326,6 @@ class Model extends DataModel
   # -------
   # Insert a model into the collection 
   #
-  # ### required args
   # **data** : data to insert
   # 
   # **callback** : called to return (error, models)
@@ -358,7 +368,6 @@ class Model extends DataModel
   # ------
   # Called on model instance to insert itself
   #
-  # ### required args
   # **callback** : called to return (error, model)
   insert : (callback)->
     @constructor.insert(
@@ -377,13 +386,11 @@ class Model extends DataModel
   # you'll want to pass "reload : true" in order to reload 
   # this model's data from Mongo.  
   #
-  # ### required args
   # **update** : update to make to the model
   # 
   # **callback** : called to return (error)
   #
-  # ### optional args
-  # **reload** : reload this model from the db after running
+  # *reload* : reload this model from the db after running
   #              the update. default is false
   update : (args)->
     if args.reload
@@ -401,7 +408,6 @@ class Model extends DataModel
   # ----
   # Save this model to the database
   # 
-  # ### required args
   # **callback** : called to return (error)
   save: (callback)->
     error = @validate()
@@ -421,7 +427,6 @@ class Model extends DataModel
   # ------
   # Reload this model's data from the db
   #
-  # ### required args
   # **callback** : called to return (error)
   reload : (callback)->
     @constructor.collection().findOne({_id : @_id}, (error, data)=>
@@ -434,7 +439,6 @@ class Model extends DataModel
   # ------
   # Remove this model from the db
   #
-  # ### required args
   # **callback** : called to return (error)
   remove: (callback)->
     collection = @constructor.collection()
@@ -449,15 +453,13 @@ class Model extends DataModel
   # ------------
   # Helper method for finding, delegated to by find and findOne
   # 
-  # ### required args
   # **method** : should be 'find' or 'findOne'
   #
   # **query**  : query to run
   # 
   # **callback** : called to return (error, model or models)
   # 
-  # ### optional args
-  # **projection** : list of subset of fields to populate
+  # *projection* : list of subset of fields to populate
   @_findHelper: (args)->
     method     = args.method
     query      = args.query
@@ -490,7 +492,6 @@ class Model extends DataModel
   # Helper method that takes an object or array of objects
   # and makes sure that they are instances of this Model
   #
-  # ### required args
   # **objs** : object or array of objects to ensure are models
   @_ensureModel : (objs)->
     is_array = Type(objs, Array) 

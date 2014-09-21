@@ -93,6 +93,12 @@
       return this._findHelper(args);
     };
 
+    Model.findAll = function(args) {
+      args.method = 'find';
+      args.query = {};
+      return this._findHelper(args);
+    };
+
     Model.findAndModify = function(args) {
       var callback;
       callback = args.callback;
