@@ -322,6 +322,35 @@ class Model extends DataModel
     
     @collection().update(query, update, options, callback)
 
+  # update
+  # ------
+  # Called on model to update itself. This is basically
+  # a convenience wrapper around the class update method
+  # to provide the _id-based query. Note that it does not
+  # update the underlying model object, and after running 
+  # the model will likely be out of sync with the db. 
+  # If you want to perform further operations on the model, 
+  # you'll want to pass "reload : true" in order to reload 
+  # this model's data from Mongo.  
+  #
+  # **update** : update to make to the model
+  # 
+  # **callback** : called to return (error)
+  #
+  # *reload* : reload this model from the db after running
+  #              the update. default is false
+  update : (args)->
+    if args.reload
+      callback = args.callback
+      args.callback = (error)=>
+        if error
+          callback(error)
+        else
+          @reload(callback)
+
+    args.query = { _id : @_id }
+    @constructor.update(args)
+
   # @insert
   # -------
   # Insert a model into the collection 
@@ -374,35 +403,6 @@ class Model extends DataModel
       data     : @
       callback : callback
     )
-
-  # update
-  # ------
-  # Called on model to update itself. This is basically
-  # a convenience wrapper around the class update method
-  # to provide the _id-based query. Note that it does not
-  # update the underlying model object, and after running 
-  # the model will likely be out of sync with the db. 
-  # If you want to perform further operations on the model, 
-  # you'll want to pass "reload : true" in order to reload 
-  # this model's data from Mongo.  
-  #
-  # **update** : update to make to the model
-  # 
-  # **callback** : called to return (error)
-  #
-  # *reload* : reload this model from the db after running
-  #              the update. default is false
-  update : (args)->
-    if args.reload
-      cb = args.callback
-      args.callback = (error)=>
-        if error
-          cb(error)
-        else
-          @reload(cb)
-
-    args.query = { _id : @_id }
-    @constructor.update(args)
 
   # save
   # ----

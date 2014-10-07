@@ -132,6 +132,26 @@
       return this.collection().update(query, update, options, callback);
     };
 
+    Model.prototype.update = function(args) {
+      var callback;
+      if (args.reload) {
+        callback = args.callback;
+        args.callback = (function(_this) {
+          return function(error) {
+            if (error) {
+              return callback(error);
+            } else {
+              return _this.reload(callback);
+            }
+          };
+        })(this);
+      }
+      args.query = {
+        _id: this._id
+      };
+      return this.constructor.update(args);
+    };
+
     Model.insert = function(args) {
       var callback, data, m, models;
       data = args.data;
@@ -161,26 +181,6 @@
         data: this,
         callback: callback
       });
-    };
-
-    Model.prototype.update = function(args) {
-      var cb;
-      if (args.reload) {
-        cb = args.callback;
-        args.callback = (function(_this) {
-          return function(error) {
-            if (error) {
-              return cb(error);
-            } else {
-              return _this.reload(cb);
-            }
-          };
-        })(this);
-      }
-      args.query = {
-        _id: this._id
-      };
-      return this.constructor.update(args);
     };
 
     Model.prototype.save = function(callback) {

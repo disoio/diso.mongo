@@ -794,7 +794,7 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
-              <h2 id="-insert">@insert</h2>
+              <h2 id="update">update</h2>
 
             </div>
             
@@ -806,6 +806,55 @@ to a model</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>Called on model to update itself. This is basically
+a convenience wrapper around the class update method
+to provide the _id-based query. Note that it does not
+update the underlying model object, and after running 
+the model will likely be out of sync with the db. 
+If you want to perform further operations on the model, 
+you’ll want to pass “reload : true” in order to reload 
+this model’s data from Mongo.  </p>
+<p><strong>update</strong> : update to make to the model</p>
+<p><strong>callback</strong> : called to return (error)</p>
+<p><em>reload</em> : reload this model from the db after running
+             the update. default is false</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  update : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    <span class="hljs-keyword">if</span> args.reload
+      callback = args.callback
+      args.<span class="hljs-function"><span class="hljs-title">callback</span> = <span class="hljs-params">(error)</span>=&gt;</span>
+        <span class="hljs-keyword">if</span> error
+          callback(error)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-property">@reload</span>(callback)
+
+    args.query = { _id : <span class="hljs-property">@_id</span> }
+    <span class="hljs-property">@constructor</span>.update(args)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <h2 id="-insert">@insert</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <p>Insert a model into the collection </p>
 <p><strong>data</strong> : data to insert</p>
@@ -830,11 +879,11 @@ to a model</p>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
+                <a class="pilcrow" href="#section-41">&#182;</a>
               </div>
               <p>The underlying insert method on the collection can accept 
 either an array or a single object to insert as its first 
@@ -863,46 +912,13 @@ model.data to get the underlying data to insert</p>
         </li>
         
         
-        <li id="section-40">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
-              </div>
-              <h2 id="insert">insert</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-41">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
-              </div>
-              <p>Called on model instance to insert itself</p>
-<p><strong>callback</strong> : called to return (error, model)</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  insert : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    <span class="hljs-property">@constructor</span>.insert(
-      data     : @
-      callback : callback
-    )</pre></div></div>
-            
-        </li>
-        
-        
         <li id="section-42">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
-              <h2 id="update">update</h2>
+              <h2 id="insert">insert</h2>
 
             </div>
             
@@ -915,32 +931,16 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
-              <p>Called on model to update itself. This is basically
-a convenience wrapper around the class update method
-to provide the _id-based query. Note that it does not
-update the underlying model object, and after running 
-the model will likely be out of sync with the db. 
-If you want to perform further operations on the model, 
-you’ll want to pass “reload : true” in order to reload 
-this model’s data from Mongo.  </p>
-<p><strong>update</strong> : update to make to the model</p>
-<p><strong>callback</strong> : called to return (error)</p>
-<p><em>reload</em> : reload this model from the db after running
-             the update. default is false</p>
+              <p>Called on model instance to insert itself</p>
+<p><strong>callback</strong> : called to return (error, model)</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  update : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    <span class="hljs-keyword">if</span> args.reload
-      cb = args.callback
-      args.<span class="hljs-function"><span class="hljs-title">callback</span> = <span class="hljs-params">(error)</span>=&gt;</span>
-        <span class="hljs-keyword">if</span> error
-          cb(error)
-        <span class="hljs-keyword">else</span>
-          <span class="hljs-property">@reload</span>(cb)
-
-    args.query = { _id : <span class="hljs-property">@_id</span> }
-    <span class="hljs-property">@constructor</span>.update(args)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  insert : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
+    <span class="hljs-property">@constructor</span>.insert(
+      data     : @
+      callback : callback
+    )</pre></div></div>
             
         </li>
         
