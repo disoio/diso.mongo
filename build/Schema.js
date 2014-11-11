@@ -99,7 +99,7 @@
     if ('alias' in args) {
       S.prototype.alias = args.alias;
     }
-    S.prototype.auto = 'gen' in args ? (S.prototype.generate = args.gen, true) : false;
+    S.prototype.auto = args.gen ? (!Type(args.gen, Function) ? throwError("SchemaID gen must be function") : void 0, S.prototype.generate = args.gen, true) : false;
     return S;
   };
 

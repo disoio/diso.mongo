@@ -34,7 +34,7 @@ class DataModel extends BaseModel
   # -----------
   # ###required args
   # **data** : the raw data being used to create this model
-  constructor: (data)->      
+  constructor: (data)->
     @_data = @constructor.cast(data)
 
   # *SCHEMA METHODS*
@@ -318,7 +318,7 @@ class DataModel extends BaseModel
     parts = utils.splitPath(path)
 
     # if a value is passed this is a set    
-    if value
+    if value  
       schema = @constructor._schema.attribute(path)
 
       data = @_data
@@ -328,7 +328,13 @@ class DataModel extends BaseModel
         data = data[part]
 
       data[last] = if schema
-        schema.cast(value)
+        # if this attr's schema is a model, use that 
+        # model's constructor which will in turn call 
+        # cast. otherwise call cast directly.
+        if Type(schema, Schema)
+          new schema.Model(value)
+        else
+          schema.cast(value)
       else
         value
 

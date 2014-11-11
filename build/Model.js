@@ -1,11 +1,9 @@
 (function() {
-  var BaseModel, DataModel, Model, MongoDB, MongoJS, ReferenceModel, Schema, Type, throwError, utils,
+  var BaseModel, DataModel, Model, MongoDB, ReferenceModel, Schema, Type, throwError, utils,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   MongoDB = require('mongodb');
-
-  MongoJS = require('mongojs');
 
   Type = require('type-of-is');
 
@@ -34,19 +32,24 @@
 
     Model.collection_name = null;
 
-    Model._collection = null;
-
-    Model.collection = function() {
-      var collection_name, db;
-      if (!this._collection) {
-        if (!this.db_url) {
-          throwError("" + this.name + " is missing required db_url");
-        }
-        db = MongoJS(this.db_url);
-        collection_name = this.collection_name || utils.underscorize(this.name);
-        this._collection = db.collection(collection_name);
+    Model.collection = function(callback) {
+      if (!this.db_url) {
+        throwError("" + this.name + " is missing required db_url");
       }
-      return this._collection;
+      return MongoDB.MongoClient.connect(this.db_url, (function(_this) {
+        return function(error, db) {
+          var collection, collection_name;
+          if (error) {
+            return callback(error, null);
+          }
+          collection_name = _this.collection_name || utils.underscorize(_this.name);
+          collection = db.collection(collection_name);
+          collection.close = function() {
+            return db.close();
+          };
+          return callback(null, collection);
+        };
+      })(this));
     };
 
     Model.prototype.id = function() {
@@ -75,52 +78,106 @@
     };
 
     Model.find = function(args) {
-      var _id;
-      args.method = 'find';
+      var callback, options, query;
       if ('_id' in args) {
-        _id = args._id;
-        delete args._id;
-        args.query = {
-          _id: _id
-        };
-        args.method = 'findOne';
+        return this.findOne(args);
       }
-      return this._findHelper(args);
+      query = args.query;
+      callback = args.callback;
+      options = args.options || {};
+      this._handleIdQuery(query);
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.find(query, options).toArray(function(error, results) {
+            var doc, models;
+            models = !error ? (function() {
+              var _i, _len, _results;
+              _results = [];
+              for (_i = 0, _len = results.length; _i < _len; _i++) {
+                doc = results[_i];
+                _results.push(new this(doc));
+              }
+              return _results;
+            }).call(_this) : null;
+            collection.close();
+            return callback(error, models);
+          });
+        };
+      })(this));
     };
 
     Model.findOne = function(args) {
-      args.method = 'findOne';
-      return this._findHelper(args);
+      var callback, options, query;
+      if ('_id' in args) {
+        args.query = {
+          _id: args._id
+        };
+      }
+      query = args.query;
+      callback = args.callback;
+      options = args.options || {};
+      this._handleIdQuery(query);
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.findOne(query, options, function(error, result) {
+            var model;
+            model = !error && result ? new _this(result) : null;
+            collection.close();
+            return callback(error, model);
+          });
+        };
+      })(this));
     };
 
     Model.findAll = function(args) {
-      args.method = 'find';
       args.query = {};
-      return this._findHelper(args);
+      return this.find(args);
     };
 
     Model.findAndModify = function(args) {
-      var callback;
+      var callback, options, query, sort, update;
+      query = args.query;
+      update = args.update;
+      options = args.options || {};
       callback = args.callback;
-      delete args.callback;
-      args["new"] = true;
-      return this.collection().findAndModify(args, (function(_this) {
-        return function(error, doc, last_error) {
-          var model;
-          model = null;
-          if (!error && doc) {
-            model = new _this(doc);
+      sort = 'sort' in args ? args.sort : null;
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
           }
-          return callback(error, model);
+          return collection.findAndModify(query, sort, update, options, function(error, result) {
+            var model;
+            model = !error && result.value ? new _this(result.value) : null;
+            collection.close();
+            return callback(error, model);
+          });
         };
       })(this));
     };
 
     Model.count = function(args) {
-      var callback, query;
+      var callback, options, query;
       query = args.query || {};
+      options = args.options || {};
       callback = args.callback;
-      return this.collection().count(query, callback);
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.count(query, options, function(error, count) {
+            collection.close();
+            return callback(error, count);
+          });
+        };
+      })(this));
     };
 
     Model.update = function(args) {
@@ -129,33 +186,47 @@
       update = args.update;
       callback = args.callback;
       options = args.options || {};
-      return this.collection().update(query, update, options, callback);
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.update(query, update, options, function(error, result) {
+            collection.close();
+            return callback(error, result);
+          });
+        };
+      })(this));
     };
 
     Model.prototype.update = function(args) {
       var callback;
-      if (args.reload) {
-        callback = args.callback;
-        args.callback = (function(_this) {
-          return function(error) {
-            if (error) {
-              return callback(error);
-            } else {
-              return _this.reload(callback);
-            }
-          };
-        })(this);
-      }
       args.query = {
         _id: this._id
+      };
+      callback = args.callback;
+      args.callback = function(error, result) {
+        if (error) {
+          return callback(error, null);
+        }
+        if (!(result.result.n > 0)) {
+          error = new Error("diso.mongo.Model: no models matched _id");
+          return callback(error, null);
+        }
+        if (args.reload) {
+          return this.reload(callback);
+        } else {
+          return callback(null);
+        }
       };
       return this.constructor.update(args);
     };
 
     Model.insert = function(args) {
-      var callback, data, m, models;
+      var callback, data, m, models, options;
       data = args.data;
       callback = args.callback;
+      options = args.options || {};
       models = this._ensureModel(data);
       data = Type(models, Array) ? (function() {
         var _i, _len, _results;
@@ -166,100 +237,108 @@
         }
         return _results;
       })() : models.data();
-      return this.collection().insert(data, (function(_this) {
-        return function(error, docs) {
-          if (!error) {
-            docs = _this._ensureModel(docs);
+      return this.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error, null);
           }
-          return callback(error, docs);
+          return collection.insert(data, options, function(error, result) {
+            models = !error ? _this._ensureModel(result.ops) : null;
+            collection.close();
+            return callback(error, models);
+          });
         };
       })(this));
     };
 
-    Model.prototype.insert = function(callback) {
-      return this.constructor.insert({
-        data: this,
-        callback: callback
-      });
+    Model.prototype.insert = function(args) {
+      var callback;
+      args.data = this;
+      callback = args.callback;
+      args.callback = function(error, models) {
+        if (!error) {
+          models = models[0];
+        }
+        return callback(error, models);
+      };
+      return this.constructor.insert(args);
     };
 
-    Model.prototype.save = function(callback) {
-      var collection, error;
+    Model.prototype.save = function(args) {
+      var callback, error, options;
+      callback = args.callback;
+      options = args.options || {};
       error = this.validate();
       if (error) {
         return callback(error);
       }
-      collection = this.constructor.collection();
-      return collection.save(this.data(), (function(_this) {
-        return function(error, doc) {
-          if (!error && doc) {
-            _this._id = doc._id;
+      return this.constructor.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
           }
-          return callback(error);
+          return collection.save(_this.data(), options, function(error, doc) {
+            if (!error && doc) {
+              _this._id = doc._id;
+            }
+            collection.close();
+            return callback(error);
+          });
         };
       })(this));
     };
 
     Model.prototype.reload = function(callback) {
-      return this.constructor.collection().findOne({
-        _id: this._id
-      }, (function(_this) {
-        return function(error, data) {
-          if (!error) {
-            _this._data = _this.constructor.cast(data);
+      return this.constructor.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error, null);
           }
-          return callback(error);
+          return collection.findOne({
+            _id: _this._id
+          }, function(error, data) {
+            if (!error) {
+              _this._data = _this.constructor.cast(data);
+            }
+            collection.close();
+            return callback(error);
+          });
         };
       })(this));
     };
 
-    Model.prototype.remove = function(callback) {
-      var collection, selector;
-      collection = this.constructor.collection();
-      selector = {
-        _id: this._id
-      };
-      return collection.remove(selector, {
-        safe: true
-      }, callback);
+    Model.remove = function(args) {
+      var callback, options, query;
+      query = args.query;
+      options = args.options || {};
+      callback = args.callback;
+      return this.constructor.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.remove(query, options, function(error, result) {
+            collection.close();
+            return callback(error, result);
+          });
+        };
+      })(this));
     };
 
-    Model._findHelper = function(args) {
-      var callback, id_is_string, method, projection, query, wants_object_id;
-      method = args.method;
-      query = args.query;
-      callback = args.callback;
-      projection = args.projection || {};
+    Model.prototype.remove = function(args) {
+      args.query = {
+        _id: this._id
+      };
+      return this.constructor.remove(args);
+    };
+
+    Model._handleIdQuery = function(query) {
+      var id_is_string, wants_object_id;
       id_is_string = Type(query._id, String);
       wants_object_id = Type(this._schema.attribute('_id'), Schema.ObjectID);
       if (id_is_string && wants_object_id) {
-        query._id = new MongoDB.ObjectID(query._id);
+        return query._id = new MongoDB.ObjectID(query._id);
       }
-      return this.collection()[method](query, projection, (function(_this) {
-        return function(error, results) {
-          var doc;
-          if (!error) {
-            results = (function() {
-              var _i, _len, _results;
-              if (Type(results, Array)) {
-                _results = [];
-                for (_i = 0, _len = results.length; _i < _len; _i++) {
-                  doc = results[_i];
-                  _results.push(new this(doc));
-                }
-                return _results;
-              } else {
-                if (results) {
-                  return new this(results);
-                } else {
-                  return null;
-                }
-              }
-            }).call(_this);
-          }
-          return callback(error, results);
-        };
-      })(this));
     };
 
     Model._ensureModel = function(objs) {

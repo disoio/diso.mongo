@@ -106,12 +106,11 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p><a href="https://github.com/mongodb/node-mongodb-native">mongodb</a><br><a href="https://github.com/mafintosh/mongojs">mongojs</a><br><a href="https://github.com/stephenhandley/type-of-is">type-of-is</a>  </p>
+              <p><a href="https://github.com/mongodb/node-mongodb-native">mongodb</a><br><a href="https://github.com/stephenhandley/type-of-is">type-of-is</a>  </p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>MongoDB = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongodb'</span>)
-MongoJS = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongojs'</span>)
 Type    = <span class="hljs-built_in">require</span>(<span class="hljs-string">'type-of-is'</span>)</pre></div></div>
             
         </li>
@@ -185,9 +184,7 @@ utils          = <span class="hljs-built_in">require</span>(<span class="hljs-st
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>Extends <a href="./DataModel.html">DataModel</a> with persistence related 
-methods, most of which delegate to <a href="https://github.com/mafintosh/mongojs">mongojs</a>
-TODO: remove mongojs, and go direct to <a href="https://github.com/mongodb/node-mongodb-native">mongodb</a>
-      so can have better access to write concerns sharding etc. </p>
+methods, </p>
 
             </div>
             
@@ -234,11 +231,9 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              <p>memoized collection class attr</p>
+              <h2 id="-collection">@collection</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@_collection</span> : <span class="hljs-literal">null</span></pre></div></div>
             
         </li>
         
@@ -249,9 +244,25 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
-              <h2 id="-collection">@collection</h2>
+              <p>Retrieve the collection backing this model </p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection</span>: <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
+    <span class="hljs-keyword">unless</span> <span class="hljs-property">@db_url</span>
+      throwError(<span class="hljs-string">"<span class="hljs-subst">#{<span class="hljs-property">@name</span>}</span> is missing required db_url"</span>)
+    
+    MongoDB.MongoClient.connect(<span class="hljs-property">@db_url</span>, <span class="hljs-function"><span class="hljs-params">(error, db)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
+
+      collection_name = <span class="hljs-property">@collection_name</span> || utils.underscorize(<span class="hljs-property">@name</span>)
+      collection = db.collection(collection_name)
+      collection.close = <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+        db.close()
+
+      callback(<span class="hljs-literal">null</span>, collection)
+    )</pre></div></div>
             
         </li>
         
@@ -261,31 +272,6 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-12">&#182;</a>
-              </div>
-              <p>Retrieve the MongoJS collection backing this model </p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
-    <span class="hljs-keyword">unless</span> <span class="hljs-property">@_collection</span>
-      <span class="hljs-keyword">unless</span> <span class="hljs-property">@db_url</span>
-        throwError(<span class="hljs-string">"<span class="hljs-subst">#{<span class="hljs-property">@name</span>}</span> is missing required db_url"</span>)
-      
-      db = MongoJS(<span class="hljs-property">@db_url</span>)
-
-      collection_name = <span class="hljs-property">@collection_name</span> || utils.underscorize(<span class="hljs-property">@name</span>)
-      <span class="hljs-property">@_collection</span> = db.collection(collection_name)
-
-    <span class="hljs-property">@_collection</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-13">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <h2 id="id-">id </h2>
 <p>Return this models _id</p>
@@ -298,14 +284,26 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
         </li>
         
         
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <h2 id="-schema-methods-"><em>SCHEMA METHODS</em></h2>
+
+            </div>
+            
+        </li>
+        
+        
         <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <h2 id="-schema-methods-"><em>SCHEMA METHODS</em></h2>
-
+              
             </div>
             
         </li>
@@ -317,7 +315,8 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              
+              <h2 id="-schema">@schema</h2>
+
             </div>
             
         </li>
@@ -328,19 +327,6 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
-              </div>
-              <h2 id="-schema">@schema</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>Called in the child with an object representing this object’s
 properties. See <a href="./Schema.html">Schema</a> for a description of 
@@ -363,11 +349,11 @@ available Schema types </p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>Ensure that schema has an _id attribute</p>
 
@@ -381,11 +367,11 @@ available Schema types </p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <h2 id="-reference">@reference</h2>
 
@@ -394,11 +380,11 @@ available Schema types </p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Used in schema definition to create a SchemaReference
 to a model</p>
@@ -438,14 +424,26 @@ to a model</p>
         </li>
         
         
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <h2 id="-lifecycle-methods-"><em>LIFECYCLE METHODS</em></h2>
+
+            </div>
+            
+        </li>
+        
+        
         <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
-              <h2 id="-lifecycle-methods-"><em>LIFECYCLE METHODS</em></h2>
-
+              
             </div>
             
         </li>
@@ -457,7 +455,8 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              
+              <h2 id="-find">@find</h2>
+
             </div>
             
         </li>
@@ -469,24 +468,11 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
-              <h2 id="-find">@find</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-24">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
-              </div>
               <p>Find models that match a given query</p>
 <p><strong>query</strong> : the mongo query to run. Instead of query
             arg can specify <strong>_id</strong> to find by _id</p>
 <p><strong>callback</strong> : called to return (error, result) </p>
-<p><em>projection</em> : subset of fields to find/populate</p>
+<p><em>options</em> : list of query options</p>
 <h3 id="example">example</h3>
 <pre><code class="lang-coffeescript">Barf.find(
   query : {
@@ -514,17 +500,54 @@ to a model</p>
         </li>
         
         
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>support _id options for common case of finding by _id<br>TODO: support _id schema aliases</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> args)
+      <span class="hljs-keyword">return</span> <span class="hljs-property">@findOne</span>(args)
+
+    query    = args.query
+    callback = args.callback 
+    options  = args.options || {}
+
+    <span class="hljs-property">@_handleIdQuery</span>(query)
+
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.find(query, options).toArray(<span class="hljs-function"><span class="hljs-params">(error, results)</span>=&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
         <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
-              <p>This method delegates to _findHelper defined below</p>
+              <p>Map model constructor over arrays and
+directly on atom</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    args.method = <span class="hljs-string">'find'</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>        models = <span class="hljs-keyword">unless</span> error
+          (<span class="hljs-keyword">new</span> @(doc) <span class="hljs-keyword">for</span> doc <span class="hljs-keyword">in</span> results)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-literal">null</span>
+
+        collection.close()
+        callback(error, models)
+      )
+    )</pre></div></div>
             
         </li>
         
@@ -535,19 +558,9 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
-              <p>support _id options for common case of finding by _id<br>TODO: support _id schema aliases</p>
+              <h2 id="-findone">@findOne</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> args)
-
-      _id = args._id
-      <span class="hljs-keyword">delete</span> args._id
-
-      args.query = { _id : _id }
-      args.method = <span class="hljs-string">'findOne'</span>
-
-    <span class="hljs-property">@_findHelper</span>(args)</pre></div></div>
             
         </li>
         
@@ -558,24 +571,11 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
-              <h2 id="-findone">@findOne</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-28">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
-              </div>
               <p>Find one model that matches a given query 
 <strong>query</strong> : the mongo query to run. Instead of query
             arg can specify <strong>_id</strong> to find by _id</p>
 <p><strong>callback</strong> : called to return (error, result) </p>
-<p><em>projection</em> : subset of fields to find/populate</p>
+<p><em>options</em> : list of query options</p>
 <h3 id="example">example</h3>
 <pre><code class="lang-coffeescript">Barf.findOne(
   query : {
@@ -592,8 +592,42 @@ to a model</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@findOne</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    args.method = <span class="hljs-string">'findOne'</span>
-    <span class="hljs-property">@_findHelper</span>(args)</pre></div></div>
+    <span class="hljs-keyword">if</span> (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> args)
+      args.query = { _id : args._id }
+
+    query    = args.query
+    callback = args.callback 
+    options  = args.options || {}
+
+    <span class="hljs-property">@_handleIdQuery</span>(query)
+
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.findOne(query, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>=&gt;</span>
+        model = <span class="hljs-keyword">if</span> (!error <span class="hljs-keyword">and</span> result)
+          <span class="hljs-keyword">new</span> @(result)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-literal">null</span>
+          
+        collection.close()
+        callback(error, model)
+      )
+    )</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <h2 id="-findall">@findAll</h2>
+
+            </div>
             
         </li>
         
@@ -603,19 +637,6 @@ to a model</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-29">&#182;</a>
-              </div>
-              <h2 id="-findall">@findAll</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-30">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>Find all models in a collection</p>
 <p><strong>callback</strong> : called to return (error, result) </p>
@@ -629,9 +650,21 @@ to a model</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@findAll</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    args.method = <span class="hljs-string">'find'</span>
     args.query  = {}
-    <span class="hljs-property">@_findHelper</span>(args)</pre></div></div>
+    <span class="hljs-property">@find</span>(args)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <h2 id="-findandmodify">@findAndModify</h2>
+
+            </div>
             
         </li>
         
@@ -642,9 +675,55 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
-              <h2 id="-findandmodify">@findAndModify</h2>
+              <p>Find and modify models that match a given query</p>
+<p><strong>query</strong> : mongo query to run</p>
+<p><strong>update</strong> : update to make to the model if found</p>
+<p><strong>callback</strong> : called to return (error, result) </p>
+<p><em>options</em> : options for query</p>
+<p><em>sort</em> : if multiple docs match, first one in sort order updated</p>
+<pre><code class="lang-coffeescript">Barf.findAndModify(
+  query : {
+    state : <span class="hljs-string">'barfing'</span>
+  }
+  update : {
+    $set  : { 
+      state   : <span class="hljs-string">'still barfing'</span>
+    }
+  }
+  options : {
+    <span class="hljs-keyword">new</span> : <span class="hljs-literal">true</span> <span class="hljs-comment"># means return the newly updated model</span>
+  } 
+  callback : <span class="hljs-function"><span class="hljs-params">(error, model)</span>=&gt;</span>
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'got modified barf!'</span>)
+)
+</code></pre>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@findAndModify</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    query    = args.query
+    update   = args.update
+    options  = args.options || {}
+    callback = args.callback
+    sort     = <span class="hljs-keyword">if</span> (<span class="hljs-string">'sort'</span> <span class="hljs-keyword">of</span> args)
+      args.sort
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-literal">null</span>
+
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.findAndModify(query, sort, update, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>=&gt;</span>
+        model = <span class="hljs-keyword">if</span> (!error <span class="hljs-keyword">and</span> result.value)
+          <span class="hljs-keyword">new</span> @(result.value)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-literal">null</span>
+
+        collection.close()
+        callback(error, model)
+      )
+    )</pre></div></div>
             
         </li>
         
@@ -655,42 +734,9 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
-              <p>Find and modify models that match a given query</p>
-<p><strong>query</strong> : mongo query to run</p>
-<p><strong>update</strong> : update to make to the model if found</p>
-<p><strong>callback</strong> : called to return (error, result) </p>
-<pre><code class="lang-coffeescript">Barf.findAndModify(
-  query : {
-    state : <span class="hljs-string">'barfing'</span>
-  }
-  update : {
-    $set  : { 
-      state   : <span class="hljs-string">'still barfing'</span>
-    }
-  }
-  <span class="hljs-keyword">new</span> : <span class="hljs-literal">true</span> <span class="hljs-comment"># means return the newly updated model </span>
-  callback : <span class="hljs-function"><span class="hljs-params">(error, model)</span>=&gt;</span>
-    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'got modified barf!'</span>)
-)
-</code></pre>
+              <h2 id="-count">@count</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@findAndModify</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    callback = args.callback
-    <span class="hljs-keyword">delete</span> args.callback
-
-    args.<span class="hljs-keyword">new</span> = <span class="hljs-literal">true</span>
-
-    <span class="hljs-property">@collection</span><span class="hljs-function"><span class="hljs-params">()</span>.<span class="hljs-title">findAndModify</span><span class="hljs-params">(args, (error, doc, last_error)=&gt;
-      model = <span class="hljs-literal">null</span>
-      <span class="hljs-keyword">if</span> (!error <span class="hljs-keyword">and</span> doc)
-        model = <span class="hljs-keyword">new</span> @(doc)
-
-      callback(error, model)
-    )</span>
-
-</span></pre></div></div>
             
         </li>
         
@@ -701,22 +747,10 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
-              <h2 id="-count">@count</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-34">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
-              </div>
               <p>Count models that match a given query</p>
-<p><strong>query</strong> : mongo query to run </p>
 <p><strong>callback</strong> : called to return (error, count) </p>
+<p><em>query</em> : mongo query to run </p>
+<p><em>options</em> : query options</p>
 <h3 id="example">example</h3>
 <pre><code class="lang-coffeescript">Barf.count(
   query : {
@@ -731,8 +765,31 @@ to a model</p>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@count</span>: <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
     query    = args.query || {}
+    options  = args.options || {}
     callback = args.callback
-    <span class="hljs-property">@collection</span>().count(query, callback)</pre></div></div>
+
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+        
+      collection.count(query, options, <span class="hljs-function"><span class="hljs-params">(error, count)</span>-&gt;</span>
+        collection.close()
+        callback(error, count)
+      )
+    )</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <h2 id="-update">@update</h2>
+
+            </div>
             
         </li>
         
@@ -743,22 +800,9 @@ to a model</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
-              <h2 id="-update">@update</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-36">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
-              </div>
               <p>Update models matching a given query</p>
 <p><strong>query</strong> : mongo query to run</p>
-<p><strong>update</strong> : update to make to the model</p>
+<p><strong>update</strong> : update to make to the models</p>
 <p><strong>callback</strong> : called to return (error) </p>
 <h3 id="example">example</h3>
 <pre><code class="lang-coffeescript">Barf.update(
@@ -783,7 +827,28 @@ to a model</p>
     callback = args.callback
     options  = args.options || {}
     
-    <span class="hljs-property">@collection</span>().update(query, update, options, callback)</pre></div></div>
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.update(query, update, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>=&gt;</span>
+        collection.close()
+        callback(error, result)
+      )
+    )</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <h2 id="update">update</h2>
+
+            </div>
             
         </li>
         
@@ -793,19 +858,6 @@ to a model</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-37">&#182;</a>
-              </div>
-              <h2 id="update">update</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-38">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>Called on model to update itself. This is basically
 a convenience wrapper around the class update method
@@ -818,21 +870,42 @@ this model’s data from Mongo.  </p>
 <p><strong>update</strong> : update to make to the model</p>
 <p><strong>callback</strong> : called to return (error)</p>
 <p><em>reload</em> : reload this model from the db after running
-             the update. default is false</p>
+           the update. default is false</p>
+<p>TODO : shouldn’t close connection in @update if its a reload</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>  update : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    <span class="hljs-keyword">if</span> args.reload
-      callback = args.callback
-      args.<span class="hljs-function"><span class="hljs-title">callback</span> = <span class="hljs-params">(error)</span>=&gt;</span>
-        <span class="hljs-keyword">if</span> error
-          callback(error)
-        <span class="hljs-keyword">else</span>
-          <span class="hljs-property">@reload</span>(callback)
-
     args.query = { _id : <span class="hljs-property">@_id</span> }
+
+    callback = args.callback 
+    args.callback = <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
+
+      <span class="hljs-keyword">unless</span> (result.result.n &gt; <span class="hljs-number">0</span>)
+        error = <span class="hljs-keyword">new</span> Error(<span class="hljs-string">"diso.mongo.Model: no models matched _id"</span>)
+        <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
+
+      <span class="hljs-keyword">if</span> args.reload
+        <span class="hljs-property">@reload</span>(callback)
+      <span class="hljs-keyword">else</span>
+        callback(<span class="hljs-literal">null</span>)
+
     <span class="hljs-property">@constructor</span>.update(args)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <h2 id="-insert">@insert</h2>
+
+            </div>
             
         </li>
         
@@ -843,22 +916,10 @@ this model’s data from Mongo.  </p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
-              <h2 id="-insert">@insert</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-40">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
-              </div>
-              <p>Insert a model into the collection </p>
-<p><strong>data</strong> : data to insert</p>
+              <p>Insert into the collection </p>
+<p><strong>data</strong> : data to insert, can be atom or array</p>
 <p><strong>callback</strong> : called to return (error, models)</p>
+<p><em>options</em> : insert options</p>
 <h3 id="example">example</h3>
 <pre><code class="lang-coffeescript">Barf.insert(
   data : {
@@ -874,16 +935,17 @@ this model’s data from Mongo.  </p>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@insert</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
     data     = args.data
-    callback = args.callback</pre></div></div>
+    callback = args.callback
+    options  = args.options || {}</pre></div></div>
             
         </li>
         
         
-        <li id="section-41">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <p>The underlying insert method on the collection can accept 
 either an array or a single object to insert as its first 
@@ -900,14 +962,33 @@ model.data to get the underlying data to insert</p>
     <span class="hljs-keyword">else</span> 
       models.data()
 
-    <span class="hljs-property">@collection</span><span class="hljs-function"><span class="hljs-params">()</span>.<span class="hljs-title">insert</span><span class="hljs-params">(data, (error, docs)=&gt;
-      <span class="hljs-keyword">unless</span> error
-        docs = <span class="hljs-property">@_ensureModel</span>(docs)
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
 
-      callback(error, docs)
-    )</span>
+      collection.insert(data, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>=&gt;</span>
+        models = <span class="hljs-keyword">unless</span> error
+          <span class="hljs-property">@_ensureModel</span>(result.ops)
+        <span class="hljs-keyword">else</span>
+          <span class="hljs-literal">null</span>
 
-</span></pre></div></div>
+        collection.close()
+        callback(error, models)
+      )
+    )</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <h2 id="insert">insert</h2>
+
+            </div>
             
         </li>
         
@@ -918,9 +999,22 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
-              <h2 id="insert">insert</h2>
+              <p>Called on model instance to insert itself</p>
+<p><strong>callback</strong> : called to return (error, model)</p>
+<p><em>options</em> : insert options</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  insert : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    args.data = @
+
+    callback = args.callback 
+    args.callback = <span class="hljs-function"><span class="hljs-params">(error, models)</span>-&gt;</span>
+      <span class="hljs-keyword">unless</span> error
+        models = models[<span class="hljs-number">0</span>]
+      callback(error, models)
+
+    <span class="hljs-property">@constructor</span>.insert(args)</pre></div></div>
             
         </li>
         
@@ -931,16 +1025,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
-              <p>Called on model instance to insert itself</p>
-<p><strong>callback</strong> : called to return (error, model)</p>
+              <h2 id="save">save</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  insert : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    <span class="hljs-property">@constructor</span>.insert(
-      data     : @
-      callback : callback
-    )</pre></div></div>
             
         </li>
         
@@ -951,9 +1038,32 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-44">&#182;</a>
               </div>
-              <h2 id="save">save</h2>
+              <p>Save this model to the database</p>
+<p><strong>callback</strong> : called to return (error)</p>
+<p><em>options</em> : save options </p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">save</span>: <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    callback = args.callback
+    options  = args.options || {}
+
+    error = <span class="hljs-property">@validate</span>()
+    <span class="hljs-keyword">if</span> error
+      <span class="hljs-keyword">return</span> callback(error)
+
+    <span class="hljs-property">@constructor</span>.collection(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.save(<span class="hljs-property">@data</span>(), options, <span class="hljs-function"><span class="hljs-params">(error, doc)</span>=&gt;</span>
+        <span class="hljs-keyword">if</span> (!error <span class="hljs-keyword">and</span> doc)
+          <span class="hljs-property">@_id</span> = doc._id
+
+        collection.close()
+        callback(error)
+      )
+    )</pre></div></div>
             
         </li>
         
@@ -964,26 +1074,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-45">&#182;</a>
               </div>
-              <p>Save this model to the database</p>
-<p><strong>callback</strong> : called to return (error)</p>
+              <h2 id="reload">reload</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">save</span>: <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    error = <span class="hljs-property">@validate</span>()
-    <span class="hljs-keyword">if</span> error
-      <span class="hljs-keyword">return</span> callback(error)
-
-    collection = <span class="hljs-property">@constructor</span>.collection()
-
-    collection.save<span class="hljs-function"><span class="hljs-params">(<span class="hljs-property">@data</span>(), (error, doc)=&gt;
-      <span class="hljs-keyword">if</span> (!error <span class="hljs-keyword">and</span> doc)
-        <span class="hljs-property">@_id</span> = doc._id
-
-      callback(error)
-    )</span>
-
-</span></pre></div></div>
             
         </li>
         
@@ -994,9 +1087,24 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-46">&#182;</a>
               </div>
-              <h2 id="reload">reload</h2>
+              <p>Reload this model’s data from the db</p>
+<p><strong>callback</strong> : called to return (error, obj)</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  reload : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
+    <span class="hljs-property">@constructor</span>.collection(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
+
+      collection.findOne({_id : <span class="hljs-property">@_id</span>}, <span class="hljs-function"><span class="hljs-params">(error, data)</span>=&gt;</span>
+        <span class="hljs-keyword">unless</span> error
+          <span class="hljs-property">@_data</span> = <span class="hljs-property">@constructor</span>.cast(data)
+
+        collection.close()
+        callback(error)
+      )
+    )</pre></div></div>
             
         </li>
         
@@ -1007,19 +1115,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-47">&#182;</a>
               </div>
-              <p>Reload this model’s data from the db</p>
-<p><strong>callback</strong> : called to return (error)</p>
+              <h2 id="-remove-">@remove </h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  reload : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    <span class="hljs-property">@constructor</span>.collection<span class="hljs-function"><span class="hljs-params">()</span>.<span class="hljs-title">findOne</span><span class="hljs-params">({_id : <span class="hljs-property">@_id</span>}, (error, data)=&gt;
-      <span class="hljs-keyword">unless</span> error
-        <span class="hljs-property">@_data</span> = <span class="hljs-property">@constructor</span>.cast(data)
-      callback(error)
-    )</span>
-
-</span></pre></div></div>
             
         </li>
         
@@ -1030,9 +1128,27 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-48">&#182;</a>
               </div>
-              <h2 id="remove">remove</h2>
+              <p>Remove records from collection</p>
+<p><strong>query</strong> : query identifying docs to remove</p>
+<p><strong>callback</strong> : called to return (error)</p>
+<p><em>options</em> : remove options</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@remove</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    query    = args.query
+    options  = args.options || {}
+    callback = args.callback
+
+    <span class="hljs-property">@constructor</span>.collection(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.remove(query, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
+        collection.close()
+        callback(error, result)
+      )
+    )</pre></div></div>
             
         </li>
         
@@ -1043,15 +1159,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-49">&#182;</a>
               </div>
-              <p>Remove this model from the db</p>
-<p><strong>callback</strong> : called to return (error)</p>
+              <h2 id="remove">remove</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">remove</span>: <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    collection = <span class="hljs-property">@constructor</span>.collection()
-    selector = { _id : <span class="hljs-property">@_id</span> }
-    collection.remove(selector, {<span class="hljs-attribute">safe</span>: <span class="hljs-literal">true</span>}, callback)</pre></div></div>
             
         </li>
         
@@ -1062,9 +1172,15 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-50">&#182;</a>
               </div>
-              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
+              <p>Remove this model from the db</p>
+<p><strong>callback</strong> : called to return (error)</p>
+<p><em>options</em> : remove options</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">remove</span>: <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    args.query = { _id : <span class="hljs-property">@_id</span> }
+    <span class="hljs-property">@constructor</span>.remove(args)</pre></div></div>
             
         </li>
         
@@ -1075,7 +1191,8 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-51">&#182;</a>
               </div>
-              
+              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
+
             </div>
             
         </li>
@@ -1087,8 +1204,7 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-52">&#182;</a>
               </div>
-              <h2 id="-_findhelper">@_findHelper</h2>
-
+              
             </div>
             
         </li>
@@ -1100,19 +1216,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-53">&#182;</a>
               </div>
-              <p>Helper method for finding, delegated to by find and findOne</p>
-<p><strong>method</strong> : should be ‘find’ or ‘findOne’</p>
-<p><strong>query</strong>  : query to run</p>
-<p><strong>callback</strong> : called to return (error, model or models)</p>
-<p><em>projection</em> : list of subset of fields to populate</p>
+              <h2 id="_handleidquery">_handleIdQuery</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@_findHelper</span>: <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    method     = args.method
-    query      = args.query
-    callback   = args.callback
-    projection = args.projection || {}</pre></div></div>
             
         </li>
         
@@ -1124,16 +1230,15 @@ model.data to get the underlying data to insert</p>
                 <a class="pilcrow" href="#section-54">&#182;</a>
               </div>
               <p>convert _id strings to ObjectIDs </p>
+<p><strong>query</strong> : query to check</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    id_is_string = Type(query._id, String)
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@_handleIdQuery</span> : <span class="hljs-function"><span class="hljs-params">(query)</span>-&gt;</span>
+    id_is_string = Type(query._id, String)
     wants_object_id = Type(<span class="hljs-property">@_schema</span>.attribute(<span class="hljs-string">'_id'</span>), Schema.ObjectID)
     <span class="hljs-keyword">if</span> (id_is_string <span class="hljs-keyword">and</span> wants_object_id)
-      query._id = <span class="hljs-keyword">new</span> MongoDB.ObjectID(query._id)
-    
-    <span class="hljs-property">@collection</span><span class="hljs-function"><span class="hljs-params">()</span>[<span class="hljs-title">method</span>]<span class="hljs-params">(query, projection, (error, results)=&gt;
-</span></span></pre></div></div>
+      query._id = <span class="hljs-keyword">new</span> MongoDB.ObjectID(query._id)</pre></div></div>
             
         </li>
         
@@ -1144,22 +1249,9 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-55">&#182;</a>
               </div>
-              <p>Map model constructor over arrays and
-directly on atom</p>
+              <h2 id="_ensuremodel">_ensureModel</h2>
 
             </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">unless</span> error
-        results = <span class="hljs-keyword">if</span> Type(results, Array)
-          <span class="hljs-keyword">new</span> @(doc) <span class="hljs-keyword">for</span> doc <span class="hljs-keyword">in</span> results
-        <span class="hljs-keyword">else</span>
-          <span class="hljs-keyword">if</span> results
-            <span class="hljs-keyword">new</span> @(results)
-          <span class="hljs-keyword">else</span>
-            <span class="hljs-literal">null</span>
-
-      callback(error, results)
-    )</pre></div></div>
             
         </li>
         
@@ -1169,19 +1261,6 @@ directly on atom</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-56">&#182;</a>
-              </div>
-              <h2 id="_ensuremodel">_ensureModel</h2>
-
-            </div>
-            
-        </li>
-        
-        
-        <li id="section-57">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-57">&#182;</a>
               </div>
               <p>Helper method that takes an object or array of objects
 and makes sure that they are instances of this Model</p>
@@ -1206,7 +1285,7 @@ and makes sure that they are instances of this Model</p>
     <span class="hljs-keyword">else</span>
       models[<span class="hljs-number">0</span>]
 
-<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = Model</pre></div></div>
+<span class="hljs-built_in">module</span>.exports = Model</pre></div></div>
             
         </li>
         

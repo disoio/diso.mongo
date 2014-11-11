@@ -11,6 +11,11 @@ class Food extends EmbeddedModel
   @schema({
     name : Schema.String
   })
+
+class Barfee extends EmbeddedModel
+  @schema({
+    name : Schema.String
+  })
     
 class Barf extends Model
   @db_url : "mongodb://localhost/disomongotest"
@@ -20,7 +25,8 @@ class Barf extends Model
    duration : Schema.Integer
    contents : [Food]
    viewers  : [Schema.Object]
-  })
+   owner    : Barfee
+  })  
 
 class Dorp extends EmbeddedModel
   @schema({
@@ -63,6 +69,16 @@ class Garth extends Model
 
 class Wayne extends Model
   @schema({
+    name : Schema.String
+  })
+
+class MyCustomIDBlob extends Model
+  @schema({
+    _id     : Schema.ID(
+      type  : Schema.String
+      gen   : false
+      alias : 'derp'
+    )
     name : Schema.String
   })
 
@@ -191,6 +207,7 @@ module.exports = {
             duration : 5000
             contents : foods
             viewers  : viewers
+            owner    : viewers[0]
           )
 
           _id = barf._id
@@ -225,7 +242,11 @@ module.exports = {
                 name: 'Delano'
               }
             ]
-            _id      : _id,
+            owner : { 
+              name : 'Jamie'
+              $model : 'Barfee'
+            }  
+            _id      : _id
             '$model' : 'Barf'
           }
 
@@ -254,6 +275,7 @@ module.exports = {
                 duration : 1000
                 contents : new Food()
                 viewers  : [{name : 'Derp'}]
+                owner    : {name : 'Dorfff'}
               )
             ), /Expecting array/)
         }
@@ -266,11 +288,12 @@ module.exports = {
           b = new Barf(
             target   : somewhere
             duration : one_thousand
-            contents : [new Food(name : pizza), new Food(name : "soup")]
+            contents : [new Food(name : pizza), new Food(name : "soup"), new Food(name : 'barf')]
             viewers  : [
               {name : 'Al'}
               {name : 'Jen'}
             ]
+            owner : {name : "robocop"}
           )
 
           {
@@ -282,7 +305,14 @@ module.exports = {
               elsewhere = "elsewhere"
               b.target = elsewhere
               Assert.equal(b.target, elsewhere)
-            
+
+            "properly define setters for embedded models" : ()->
+              Assert.equal(b.owner.name, 'robocop')
+              Assert.equal(Type(b.owner), Barfee)
+              b.owner = { name : 'robocop2' }
+              Assert.equal(b.owner.name, 'robocop2')
+              Assert.equal(Type(b.owner), Barfee)
+
             "properly handle typed arrays" : {
               "containing models by having " : {
                 "correct types" : ()->
@@ -382,5 +412,15 @@ module.exports = {
           }
           Assert.deepEqual(fart_deets, fart_deets_expected)
       }
+
+    "should support custom id" : ()->
+      derp = new MyCustomIDBlob(
+        _id : 'totally'
+        name : 'yes'
+      )
+
+      Assert.equal(derp._id, 'totally')
+      Assert.equal(derp.derp, 'totally')
+      Assert.equal(derp.name, 'yes')
   }
 }

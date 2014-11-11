@@ -139,7 +139,9 @@ makeSchemaID = (args)->
   if ('alias' of args)
     S.prototype.alias = args.alias
   
-  S.prototype.auto = if ('gen' of args)
+  S.prototype.auto = if args.gen
+    unless Type(args.gen, Function)
+      throwError("SchemaID gen must be function")
     S.prototype.generate = args.gen
     true
   else
@@ -519,7 +521,6 @@ class SchemaModel extends SchemaBase
     data = {}
 
     for k, v of obj
-
       if @processed_schema.hasOwnProperty(k)
         # if this key is in the processed schema object,
         # get its associated schema

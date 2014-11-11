@@ -1,10 +1,8 @@
 # NPM dependencies
 # ------------------
 # [mongodb](https://github.com/mongodb/node-mongodb-native)  
-# [mongojs](https://github.com/mafintosh/mongojs)  
 # [type-of-is](https://github.com/stephenhandley/type-of-is)  
 MongoDB = require('mongodb')
-MongoJS = require('mongojs')
 Type    = require('type-of-is')
 
 # Local dependencies
@@ -27,9 +25,8 @@ throwError = (msg)->
 # Model
 # =====
 # Extends [DataModel](./DataModel.html) with persistence related 
-# methods, most of which delegate to [mongojs](https://github.com/mafintosh/mongojs)
-# TODO: remove mongojs, and go direct to [mongodb](https://github.com/mongodb/node-mongodb-native)
-#       so can have better access to write concerns sharding etc. 
+# methods, 
+# 
 class Model extends DataModel
   # MongoDB url for the database where this model is stored
   # required
@@ -39,23 +36,24 @@ class Model extends DataModel
   # of the model i.e. BarfMuseum => barf_museum
   @collection_name : null
 
-  # memoized collection class attr
-  @_collection : null
-
   # @collection
   # -----------
-  # Retrieve the MongoJS collection backing this model 
-  @collection: ()->
-    unless @_collection
-      unless @db_url
-        throwError("#{@name} is missing required db_url")
-      
-      db = MongoJS(@db_url)
+  # Retrieve the collection backing this model 
+  @collection: (callback)->
+    unless @db_url
+      throwError("#{@name} is missing required db_url")
+    
+    MongoDB.MongoClient.connect(@db_url, (error, db)=>
+      if error
+        return callback(error, null)
 
       collection_name = @collection_name || utils.underscorize(@name)
-      @_collection = db.collection(collection_name)
+      collection = db.collection(collection_name)
+      collection.close = ()->
+        db.close()
 
-    @_collection
+      callback(null, collection)
+    )
 
   # id 
   # --
@@ -142,7 +140,7 @@ class Model extends DataModel
   #
   # **callback** : called to return (error, result) 
   #
-  # *projection* : subset of fields to find/populate
+  # *options* : list of query options
   #
   # ### example
   # ```coffeescript
@@ -167,20 +165,33 @@ class Model extends DataModel
   # )
   # ```
   @find: (args)->
-    # This method delegates to _findHelper defined below
-    args.method = 'find'
-
     # support _id options for common case of finding by _id  
     # TODO: support _id schema aliases
     if ('_id' of args)
+      return @findOne(args)
 
-      _id = args._id
-      delete args._id
+    query    = args.query
+    callback = args.callback 
+    options  = args.options || {}
 
-      args.query = { _id : _id }
-      args.method = 'findOne'
+    @_handleIdQuery(query)
 
-    @_findHelper(args)
+    @collection((error, collection)=>
+      if error
+        return callback(error)
+
+      collection.find(query, options).toArray((error, results)=>
+        # Map model constructor over arrays and
+        # directly on atom
+        models = unless error
+          (new @(doc) for doc in results)
+        else
+          null
+
+        collection.close()
+        callback(error, models)
+      )
+    )
   
   # @findOne
   # --------
@@ -190,7 +201,7 @@ class Model extends DataModel
   #
   # **callback** : called to return (error, result) 
   #
-  # *projection* : subset of fields to find/populate
+  # *options* : list of query options
   #
   # ### example
   # ```coffeescript
@@ -206,9 +217,30 @@ class Model extends DataModel
   # )
   # ```
   @findOne : (args)->
-    args.method = 'findOne'
-    @_findHelper(args)
-  
+    if ('_id' of args)
+      args.query = { _id : args._id }
+
+    query    = args.query
+    callback = args.callback 
+    options  = args.options || {}
+
+    @_handleIdQuery(query)
+
+    @collection((error, collection)=>
+      if error
+        return callback(error)
+
+      collection.findOne(query, options, (error, result)=>
+        model = if (!error and result)
+          new @(result)
+        else
+          null
+          
+        collection.close()
+        callback(error, model)
+      )
+    )
+
   # @findAll
   # --------
   # Find all models in a collection
@@ -223,9 +255,8 @@ class Model extends DataModel
   # )
   # ```
   @findAll : (args)->
-    args.method = 'find'
     args.query  = {}
-    @_findHelper(args)
+    @find(args)
     
   # @findAndModify
   # --------------
@@ -236,6 +267,10 @@ class Model extends DataModel
   # **update** : update to make to the model if found
   # 
   # **callback** : called to return (error, result) 
+  # 
+  # *options* : options for query
+  # 
+  # *sort* : if multiple docs match, first one in sort order updated
   #
   # ```coffeescript
   # Barf.findAndModify(
@@ -247,32 +282,47 @@ class Model extends DataModel
   #       state   : 'still barfing'
   #     }
   #   }
-  #   new : true # means return the newly updated model 
+  #   options : {
+  #     new : true # means return the newly updated model
+  #   } 
   #   callback : (error, model)=>
   #     console.log('got modified barf!')
   # )
   # ```
   @findAndModify : (args)->
+    query    = args.query
+    update   = args.update
+    options  = args.options || {}
     callback = args.callback
-    delete args.callback
+    sort     = if ('sort' of args)
+      args.sort
+    else
+      null
 
-    args.new = true
+    @collection((error, collection)=>
+      if error
+        return callback(error)
 
-    @collection().findAndModify(args, (error, doc, last_error)=>
-      model = null
-      if (!error and doc)
-        model = new @(doc)
+      collection.findAndModify(query, sort, update, options, (error, result)=>
+        model = if (!error and result.value)
+          new @(result.value)
+        else
+          null
 
-      callback(error, model)
+        collection.close()
+        callback(error, model)
+      )
     )
 
   # @count
   # ------
   # Count models that match a given query
-  #
-  # **query** : mongo query to run 
   # 
   # **callback** : called to return (error, count) 
+  #
+  # *query* : mongo query to run 
+  # 
+  # *options* : query options
   #
   # ### example
   # ```coffeescript
@@ -286,8 +336,18 @@ class Model extends DataModel
   # ```
   @count: (args)->
     query    = args.query || {}
+    options  = args.options || {}
     callback = args.callback
-    @collection().count(query, callback)
+
+    @collection((error, collection)=>
+      if error
+        return callback(error)
+        
+      collection.count(query, options, (error, count)->
+        collection.close()
+        callback(error, count)
+      )
+    )
 
   # @update
   # -------
@@ -295,7 +355,7 @@ class Model extends DataModel
   #
   # **query** : mongo query to run
   # 
-  # **update** : update to make to the model
+  # **update** : update to make to the models
   # 
   # **callback** : called to return (error) 
   # 
@@ -320,7 +380,15 @@ class Model extends DataModel
     callback = args.callback
     options  = args.options || {}
     
-    @collection().update(query, update, options, callback)
+    @collection((error, collection)=>
+      if error
+        return callback(error)
+
+      collection.update(query, update, options, (error, result)=>
+        collection.close()
+        callback(error, result)
+      )
+    )
 
   # update
   # ------
@@ -338,26 +406,37 @@ class Model extends DataModel
   # **callback** : called to return (error)
   #
   # *reload* : reload this model from the db after running
-  #              the update. default is false
+  #            the update. default is false
+  #
+  # TODO : shouldn't close connection in @update if its a reload
   update : (args)->
-    if args.reload
-      callback = args.callback
-      args.callback = (error)=>
-        if error
-          callback(error)
-        else
-          @reload(callback)
-
     args.query = { _id : @_id }
+
+    callback = args.callback 
+    args.callback = (error, result)->
+      if error
+        return callback(error, null)
+
+      unless (result.result.n > 0)
+        error = new Error("diso.mongo.Model: no models matched _id")
+        return callback(error, null)
+
+      if args.reload
+        @reload(callback)
+      else
+        callback(null)
+
     @constructor.update(args)
 
   # @insert
   # -------
-  # Insert a model into the collection 
+  # Insert into the collection 
   #
-  # **data** : data to insert
+  # **data** : data to insert, can be atom or array
   # 
   # **callback** : called to return (error, models)
+  #
+  # *options* : insert options
   # 
   # ### example
   # ```coffeescript
@@ -373,6 +452,7 @@ class Model extends DataModel
   @insert : (args)->
     data     = args.data
     callback = args.callback
+    options  = args.options || {}
 
     # The underlying insert method on the collection can accept 
     # either an array or a single object to insert as its first 
@@ -386,11 +466,19 @@ class Model extends DataModel
     else 
       models.data()
 
-    @collection().insert(data, (error, docs)=>
-      unless error
-        docs = @_ensureModel(docs)
+    @collection((error, collection)=>
+      if error
+        return callback(error, null)
 
-      callback(error, docs)
+      collection.insert(data, options, (error, result)=>
+        models = unless error
+          @_ensureModel(result.ops)
+        else
+          null
+
+        collection.close()
+        callback(error, models)
+      )
     )
 
   # insert
@@ -398,41 +486,88 @@ class Model extends DataModel
   # Called on model instance to insert itself
   #
   # **callback** : called to return (error, model)
-  insert : (callback)->
-    @constructor.insert(
-      data     : @
-      callback : callback
-    )
+  #
+  # *options* : insert options
+  insert : (args)->
+    args.data = @
+
+    callback = args.callback 
+    args.callback = (error, models)->
+      unless error
+        models = models[0]
+      callback(error, models)
+
+    @constructor.insert(args)
 
   # save
   # ----
   # Save this model to the database
   # 
   # **callback** : called to return (error)
-  save: (callback)->
+  #
+  # *options* : save options 
+  save: (args)->
+    callback = args.callback
+    options  = args.options || {}
+
     error = @validate()
     if error
       return callback(error)
 
-    collection = @constructor.collection()
+    @constructor.collection((error, collection)=>
+      if error
+        return callback(error)
 
-    collection.save(@data(), (error, doc)=>
-      if (!error and doc)
-        @_id = doc._id
+      collection.save(@data(), options, (error, doc)=>
+        if (!error and doc)
+          @_id = doc._id
 
-      callback(error)
+        collection.close()
+        callback(error)
+      )
     )
 
   # reload
   # ------
   # Reload this model's data from the db
   #
-  # **callback** : called to return (error)
+  # **callback** : called to return (error, obj)
   reload : (callback)->
-    @constructor.collection().findOne({_id : @_id}, (error, data)=>
-      unless error
-        @_data = @constructor.cast(data)
-      callback(error)
+    @constructor.collection((error, collection)=>
+      if error
+        return callback(error, null)
+
+      collection.findOne({_id : @_id}, (error, data)=>
+        unless error
+          @_data = @constructor.cast(data)
+
+        collection.close()
+        callback(error)
+      )
+    )
+
+  # @remove 
+  # -------
+  # Remove records from collection
+  #
+  # **query** : query identifying docs to remove
+  #
+  # **callback** : called to return (error)
+  #
+  # *options* : remove options
+  @remove : (args)->
+    query    = args.query
+    options  = args.options || {}
+    callback = args.callback
+
+    @constructor.collection((error, collection)=>
+      if error
+        return callback(error)
+
+      collection.remove(query, options, (error, result)->
+        collection.close()
+        callback(error, result)
+      )
     )
 
   # remove
@@ -440,52 +575,26 @@ class Model extends DataModel
   # Remove this model from the db
   #
   # **callback** : called to return (error)
-  remove: (callback)->
-    collection = @constructor.collection()
-    selector = { _id : @_id }
-    collection.remove(selector, {safe: true}, callback)
+  #
+  # *options* : remove options
+  remove: (args)->
+    args.query = { _id : @_id }
+    @constructor.remove(args)
 
 
   # *INTERNAL METHODS*
   # ------------------
 
-  # @_findHelper
-  # ------------
-  # Helper method for finding, delegated to by find and findOne
-  # 
-  # **method** : should be 'find' or 'findOne'
+  # _handleIdQuery
+  # --------------
+  # convert _id strings to ObjectIDs 
   #
-  # **query**  : query to run
-  # 
-  # **callback** : called to return (error, model or models)
-  # 
-  # *projection* : list of subset of fields to populate
-  @_findHelper: (args)->
-    method     = args.method
-    query      = args.query
-    callback   = args.callback
-    projection = args.projection || {}
-
-    # convert _id strings to ObjectIDs 
+  # **query** : query to check
+  @_handleIdQuery : (query)->
     id_is_string = Type(query._id, String)
     wants_object_id = Type(@_schema.attribute('_id'), Schema.ObjectID)
     if (id_is_string and wants_object_id)
       query._id = new MongoDB.ObjectID(query._id)
-    
-    @collection()[method](query, projection, (error, results)=>
-      # Map model constructor over arrays and
-      # directly on atom
-      unless error
-        results = if Type(results, Array)
-          new @(doc) for doc in results
-        else
-          if results
-            new @(results)
-          else
-            null
-
-      callback(error, results)
-    )
 
   # _ensureModel
   # -------------------

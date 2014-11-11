@@ -1,5 +1,5 @@
 (function() {
-  var Assert, Asserts, Barf, Cletus, Derp, Dorp, EmbeddedModel, Food, Garth, Gort, Model, Mongo, Schema, Type, Wayne, Wonky,
+  var Assert, Asserts, Barf, Barfee, Cletus, Derp, Dorp, EmbeddedModel, Food, Garth, Gort, Model, Mongo, MyCustomIDBlob, Schema, Type, Wayne, Wonky,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -32,6 +32,21 @@
 
   })(EmbeddedModel);
 
+  Barfee = (function(_super) {
+    __extends(Barfee, _super);
+
+    function Barfee() {
+      return Barfee.__super__.constructor.apply(this, arguments);
+    }
+
+    Barfee.schema({
+      name: Schema.String
+    });
+
+    return Barfee;
+
+  })(EmbeddedModel);
+
   Barf = (function(_super) {
     __extends(Barf, _super);
 
@@ -45,7 +60,8 @@
       target: Schema.String,
       duration: Schema.Integer,
       contents: [Food],
-      viewers: [Schema.Object]
+      viewers: [Schema.Object],
+      owner: Barfee
     });
 
     return Barf;
@@ -163,6 +179,26 @@
     });
 
     return Wayne;
+
+  })(Model);
+
+  MyCustomIDBlob = (function(_super) {
+    __extends(MyCustomIDBlob, _super);
+
+    function MyCustomIDBlob() {
+      return MyCustomIDBlob.__super__.constructor.apply(this, arguments);
+    }
+
+    MyCustomIDBlob.schema({
+      _id: Schema.ID({
+        type: Schema.String,
+        gen: false,
+        alias: 'derp'
+      }),
+      name: Schema.String
+    });
+
+    return MyCustomIDBlob;
 
   })(Model);
 
@@ -312,7 +348,8 @@
                 target: 'there',
                 duration: 5000,
                 contents: foods,
-                viewers: viewers
+                viewers: viewers,
+                owner: viewers[0]
               });
               _id = barf._id;
               actual = barf.deflate({
@@ -342,6 +379,10 @@
                     name: 'Delano'
                   }
                 ],
+                owner: {
+                  name: 'Jamie',
+                  $model: 'Barfee'
+                },
                 _id: _id,
                 '$model': 'Barf'
               };
@@ -385,7 +426,10 @@
                     {
                       name: 'Derp'
                     }
-                  ]
+                  ],
+                  owner: {
+                    name: 'Dorfff'
+                  }
                 });
               }), /Expecting array/);
             }
@@ -403,6 +447,8 @@
                   name: pizza
                 }), new Food({
                   name: "soup"
+                }), new Food({
+                  name: 'barf'
                 })
               ],
               viewers: [
@@ -411,7 +457,10 @@
                 }, {
                   name: 'Jen'
                 }
-              ]
+              ],
+              owner: {
+                name: "robocop"
+              }
             });
             return {
               "properly define getters for schema attributes": function() {
@@ -423,6 +472,15 @@
                 elsewhere = "elsewhere";
                 b.target = elsewhere;
                 return Assert.equal(b.target, elsewhere);
+              },
+              "properly define setters for embedded models": function() {
+                Assert.equal(b.owner.name, 'robocop');
+                Assert.equal(Type(b.owner), Barfee);
+                b.owner = {
+                  name: 'robocop2'
+                };
+                Assert.equal(b.owner.name, 'robocop2');
+                return Assert.equal(Type(b.owner), Barfee);
               },
               "properly handle typed arrays": {
                 "containing models by having ": {
@@ -545,6 +603,16 @@
             return Assert.deepEqual(fart_deets, fart_deets_expected);
           }
         };
+      },
+      "should support custom id": function() {
+        var derp;
+        derp = new MyCustomIDBlob({
+          _id: 'totally',
+          name: 'yes'
+        });
+        Assert.equal(derp._id, 'totally');
+        Assert.equal(derp.derp, 'totally');
+        return Assert.equal(derp.name, 'yes');
       }
     }
   };

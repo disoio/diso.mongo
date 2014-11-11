@@ -109,6 +109,11 @@ Schema        = Mongo.Schema
   <span class="hljs-property">@schema</span>({
     name : Schema.String
   })
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Barfee</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+  <span class="hljs-property">@schema</span>({
+    name : Schema.String
+  })
     
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Barf</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
   <span class="hljs-property">@db_url</span> : <span class="hljs-string">"mongodb://localhost/disomongotest"</span>
@@ -118,7 +123,8 @@ Schema        = Mongo.Schema
    duration : Schema.Integer
    contents : [Food]
    viewers  : [Schema.Object]
-  })
+   owner    : Barfee
+  })  
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dorp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
   <span class="hljs-property">@schema</span>({
@@ -164,7 +170,17 @@ Schema        = Mongo.Schema
     name : Schema.String
   })
 
-<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = {
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyCustomIDBlob</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+  <span class="hljs-property">@schema</span>({
+    _id     : Schema.ID(
+      type  : Schema.String
+      gen   : <span class="hljs-literal">false</span>
+      alias : <span class="hljs-string">'derp'</span>
+    )
+    name : Schema.String
+  })
+
+<span class="hljs-built_in">module</span>.exports = {
 
   <span class="hljs-string">"DataModel"</span> : {
     <span class="hljs-string">"should have .data method that"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
@@ -289,6 +305,7 @@ Schema        = Mongo.Schema
             duration : <span class="hljs-number">5000</span>
             contents : foods
             viewers  : viewers
+            owner    : viewers[<span class="hljs-number">0</span>]
           )
 
           _id = barf._id
@@ -323,7 +340,11 @@ Schema        = Mongo.Schema
                 <span class="hljs-attribute">name</span>: <span class="hljs-string">'Delano'</span>
               }
             ]
-            _id      : _id,
+            owner : { 
+              name : <span class="hljs-string">'Jamie'</span>
+              $model : <span class="hljs-string">'Barfee'</span>
+            }  
+            _id      : _id
             <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Barf'</span>
           }
 
@@ -334,29 +355,30 @@ Schema        = Mongo.Schema
 
     <span class="hljs-string">"that has invalid schema"</span>: {
       <span class="hljs-string">"should throw error"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
-        Assert.throws<span class="hljs-function"><span class="hljs-params">((()-&gt;
-          class InvalidSchemaModel extends Model
+        Assert.throws(<span class="hljs-function">(<span class="hljs-params">()</span>-&gt;</span>
+          <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">InvalidSchemaModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
             <span class="hljs-property">@schema</span>({
-              something: Schema.not_defined
+              <span class="hljs-attribute">something</span>: Schema.not_defined
             })
-        ), <span class="hljs-regexp">/Invalid schema type/</span>)</span>
+        ), <span class="hljs-regexp">/Invalid schema type/</span>)
     }
 
-    "<span class="hljs-title">that</span> <span class="hljs-title">has</span> <span class="hljs-title">valid</span> <span class="hljs-title">schema</span>": <span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-string">"that has valid schema"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
       {
         <span class="hljs-string">"and invalid data should"</span> : {
           <span class="hljs-string">"throw error when schema expects array and given atom"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
-            Assert.throws<span class="hljs-function"><span class="hljs-params">((()-&gt;
+            Assert.throws(<span class="hljs-function">(<span class="hljs-params">()</span>-&gt;</span>
               b = <span class="hljs-keyword">new</span> Barf(
                 target   : <span class="hljs-string">"somewhere"</span>
                 duration : <span class="hljs-number">1000</span>
                 contents : <span class="hljs-keyword">new</span> Food()
                 viewers  : [{name : <span class="hljs-string">'Derp'</span>}]
+                owner    : {name : <span class="hljs-string">'Dorfff'</span>}
               )
-            ), <span class="hljs-regexp">/Expecting array/</span>)</span>
+            ), <span class="hljs-regexp">/Expecting array/</span>)
         }
         
-        "<span class="hljs-title">and</span> <span class="hljs-title">valid</span> <span class="hljs-title">data</span> <span class="hljs-title">should</span>": <span class="hljs-params">()</span>-&gt;</span>      
+        <span class="hljs-string">"and valid data should"</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>      
           somewhere = <span class="hljs-string">"somewhere"</span>
           one_thousand = <span class="hljs-number">1000</span>
           pizza = <span class="hljs-string">"pizza"</span>
@@ -364,11 +386,12 @@ Schema        = Mongo.Schema
           b = <span class="hljs-keyword">new</span> Barf(
             target   : somewhere
             duration : one_thousand
-            contents : [<span class="hljs-keyword">new</span> Food(name : pizza), <span class="hljs-keyword">new</span> Food(name : <span class="hljs-string">"soup"</span>)]
+            contents : [<span class="hljs-keyword">new</span> Food(name : pizza), <span class="hljs-keyword">new</span> Food(name : <span class="hljs-string">"soup"</span>), <span class="hljs-keyword">new</span> Food(name : <span class="hljs-string">'barf'</span>)]
             viewers  : [
               {name : <span class="hljs-string">'Al'</span>}
               {name : <span class="hljs-string">'Jen'</span>}
             ]
+            owner : {name : <span class="hljs-string">"robocop"</span>}
           )
 
           {
@@ -380,7 +403,14 @@ Schema        = Mongo.Schema
               elsewhere = <span class="hljs-string">"elsewhere"</span>
               b.target = elsewhere
               Assert.equal(b.target, elsewhere)
-            
+
+            <span class="hljs-string">"properly define setters for embedded models"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+              Assert.equal(b.owner.name, <span class="hljs-string">'robocop'</span>)
+              Assert.equal(Type(b.owner), Barfee)
+              b.owner = { name : <span class="hljs-string">'robocop2'</span> }
+              Assert.equal(b.owner.name, <span class="hljs-string">'robocop2'</span>)
+              Assert.equal(Type(b.owner), Barfee)
+
             <span class="hljs-string">"properly handle typed arrays"</span> : {
               <span class="hljs-string">"containing models by having "</span> : {
                 <span class="hljs-string">"correct types"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
@@ -480,6 +510,16 @@ Schema        = Mongo.Schema
           }
           Assert.deepEqual(fart_deets, fart_deets_expected)
       }
+
+    <span class="hljs-string">"should support custom id"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+      derp = <span class="hljs-keyword">new</span> MyCustomIDBlob(
+        _id : <span class="hljs-string">'totally'</span>
+        name : <span class="hljs-string">'yes'</span>
+      )
+
+      Assert.equal(derp._id, <span class="hljs-string">'totally'</span>)
+      Assert.equal(derp.derp, <span class="hljs-string">'totally'</span>)
+      Assert.equal(derp.name, <span class="hljs-string">'yes'</span>)
   }
 }</pre></div></div>
             

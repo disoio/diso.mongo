@@ -492,7 +492,9 @@ SchemaID and can be used for object’s primary _id</p>
   <span class="hljs-keyword">if</span> (<span class="hljs-string">'alias'</span> <span class="hljs-keyword">of</span> args)
     S.prototype.alias = args.alias
   
-  S.prototype.auto = <span class="hljs-keyword">if</span> (<span class="hljs-string">'gen'</span> <span class="hljs-keyword">of</span> args)
+  S.prototype.auto = <span class="hljs-keyword">if</span> args.gen
+    <span class="hljs-keyword">unless</span> Type(args.gen, Function)
+      throwError(<span class="hljs-string">"SchemaID gen must be function"</span>)
     S.prototype.generate = args.gen
     <span class="hljs-literal">true</span>
   <span class="hljs-keyword">else</span>
@@ -1102,8 +1104,8 @@ javascript or mongodb primitive.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">_schemaTypeForPrimitive</span> = <span class="hljs-params">(()-&gt;
-  _primitive_types = _primitive_schemas.map((PS)-&gt;
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">_schemaTypeForPrimitive</span> = (<span class="hljs-params">()</span>-&gt;</span>
+  _primitive_types = _primitive_schemas.map(<span class="hljs-function"><span class="hljs-params">(PS)</span>-&gt;</span>
     ps = <span class="hljs-keyword">new</span> PS()
     ps.type
   )
@@ -1114,9 +1116,7 @@ javascript or mongodb primitive.</p>
       <span class="hljs-literal">null</span>
     <span class="hljs-keyword">else</span>
       _primitive_schemas[index]
-)()</span>
-
-</span></pre></div></div>
+)()</pre></div></div>
             
         </li>
         
@@ -1474,7 +1474,7 @@ processing the passed schema definition in the process</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-function"><span class="hljs-title">_throwError</span> = <span class="hljs-params">(attr)</span>-&gt;</span>
+            <div class="content"><div class='highlight'><pre><span class="hljs-function">    <span class="hljs-title">_throwError</span> = <span class="hljs-params">(attr)</span>-&gt;</span>
       throwError(<span class="hljs-string">"Invalid schema type for field: <span class="hljs-subst">#{attr}</span>"</span>)
     
     <span class="hljs-keyword">for</span> attr, type <span class="hljs-keyword">of</span> definition
@@ -1758,7 +1758,6 @@ return it as is</p>
             <div class="content"><div class='highlight'><pre>    data = {}
 
     <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> obj
-
       <span class="hljs-keyword">if</span> <span class="hljs-property">@processed_schema</span>.hasOwnProperty(k)</pre></div></div>
             
         </li>
@@ -1975,8 +1974,7 @@ elements all of a specific type</p>
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">unless</span> Array.isArray(values)
       throwError(<span class="hljs-string">"Expecting array"</span>)
     
-    values.map<span class="hljs-function"><span class="hljs-params">((value)=&gt;
-</span></span></pre></div></div>
+    values.map(<span class="hljs-function"><span class="hljs-params">(value)</span>=&gt;</span></pre></div></div>
             
         </li>
         
@@ -2213,7 +2211,7 @@ SchemaModel.UntypedArray = SchemaUntypedArray</pre></div></div>
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">for</span> primitive <span class="hljs-keyword">in</span> _primitive_schemas
   SchemaModel[primitive.name.replace(<span class="hljs-regexp">/^Schema/</span>, <span class="hljs-string">''</span>)] = primitive
 
-<span class="hljs-built_in">module</span>.<span class="hljs-built_in">exports</span> = SchemaModel</pre></div></div>
+<span class="hljs-built_in">module</span>.exports = SchemaModel</pre></div></div>
             
         </li>
         
