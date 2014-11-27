@@ -560,7 +560,7 @@ class Model extends DataModel
     options  = args.options || {}
     callback = args.callback
 
-    @constructor.collection((error, collection)=>
+    @collection((error, collection)=>
       if error
         return callback(error)
 

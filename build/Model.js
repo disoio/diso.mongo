@@ -312,7 +312,7 @@
       query = args.query;
       options = args.options || {};
       callback = args.callback;
-      return this.constructor.collection((function(_this) {
+      return this.collection((function(_this) {
         return function(error, collection) {
           if (error) {
             return callback(error);

@@ -258,7 +258,7 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
 
       collection_name = <span class="hljs-property">@collection_name</span> || utils.underscorize(<span class="hljs-property">@name</span>)
       collection = db.collection(collection_name)
-      collection.close = <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+      collection.c<span class="hljs-function"><span class="hljs-title">lose</span> = <span class="hljs-params">()</span>-&gt;</span>
         db.close()
 
       callback(<span class="hljs-literal">null</span>, collection)
@@ -879,7 +879,7 @@ this model’s data from Mongo.  </p>
     args.query = { _id : <span class="hljs-property">@_id</span> }
 
     callback = args.callback 
-    args.callback = <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
+    args.c<span class="hljs-function"><span class="hljs-title">allback</span> = <span class="hljs-params">(error, result)</span>-&gt;</span>
       <span class="hljs-keyword">if</span> error
         <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
 
@@ -1009,7 +1009,7 @@ model.data to get the underlying data to insert</p>
     args.data = @
 
     callback = args.callback 
-    args.callback = <span class="hljs-function"><span class="hljs-params">(error, models)</span>-&gt;</span>
+    args.c<span class="hljs-function"><span class="hljs-title">allback</span> = <span class="hljs-params">(error, models)</span>-&gt;</span>
       <span class="hljs-keyword">unless</span> error
         models = models[<span class="hljs-number">0</span>]
       callback(error, models)
@@ -1140,7 +1140,7 @@ model.data to get the underlying data to insert</p>
     options  = args.options || {}
     callback = args.callback
 
-    <span class="hljs-property">@constructor</span>.collection(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+    <span class="hljs-property">@collection</span>(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
       <span class="hljs-keyword">if</span> error
         <span class="hljs-keyword">return</span> callback(error)
 
