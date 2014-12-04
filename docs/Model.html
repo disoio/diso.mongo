@@ -1115,7 +1115,7 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-47">&#182;</a>
               </div>
-              <h2 id="-remove-">@remove </h2>
+              <h2 id="-delete">@delete</h2>
 
             </div>
             
@@ -1128,14 +1128,14 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-48">&#182;</a>
               </div>
-              <p>Remove records from collection</p>
-<p><strong>query</strong> : query identifying docs to remove</p>
+              <p>Delete records from collection</p>
+<p><strong>query</strong> : query identifying docs to delete</p>
 <p><strong>callback</strong> : called to return (error)</p>
 <p><em>options</em> : remove options</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@remove</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@delete</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
     query    = args.query
     options  = args.options || {}
     callback = args.callback
@@ -1144,9 +1144,11 @@ model.data to get the underlying data to insert</p>
       <span class="hljs-keyword">if</span> error
         <span class="hljs-keyword">return</span> callback(error)
 
-      collection.remove(query, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
-        collection.close()
-        callback(error, result)
+      collection.deleteMany(query, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
+        collection.count(query, {}, <span class="hljs-function"><span class="hljs-params">(error, count)</span>-&gt;</span>
+          collection.close()
+          callback(error, result.deletedCount)
+        )
       )
     )</pre></div></div>
             
@@ -1159,7 +1161,7 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-49">&#182;</a>
               </div>
-              <h2 id="remove">remove</h2>
+              <h2 id="delete">delete</h2>
 
             </div>
             
@@ -1172,15 +1174,26 @@ model.data to get the underlying data to insert</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-50">&#182;</a>
               </div>
-              <p>Remove this model from the db</p>
+              <p>Delete this model from the db</p>
 <p><strong>callback</strong> : called to return (error)</p>
-<p><em>options</em> : remove options</p>
+<p><em>options</em> : delete options</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">remove</span>: <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
-    args.query = { _id : <span class="hljs-property">@_id</span> }
-    <span class="hljs-property">@constructor</span>.remove(args)</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">delete</span> : <span class="hljs-function"><span class="hljs-params">(args)</span>-&gt;</span>
+    callback = args.callback
+    options  = args.options || {}
+    query    = { _id : <span class="hljs-property">@_id</span> }
+    
+    <span class="hljs-property">@constructor</span>.collection(<span class="hljs-function"><span class="hljs-params">(error, collection)</span>=&gt;</span>
+      <span class="hljs-keyword">if</span> error
+        <span class="hljs-keyword">return</span> callback(error)
+
+      collection.deleteOne(query, options, <span class="hljs-function"><span class="hljs-params">(error, result)</span>-&gt;</span>
+        collection.close()
+        callback(error)
+      )
+    )</pre></div></div>
             
         </li>
         

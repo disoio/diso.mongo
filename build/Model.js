@@ -307,7 +307,7 @@
       })(this));
     };
 
-    Model.remove = function(args) {
+    Model["delete"] = function(args) {
       var callback, options, query;
       query = args.query;
       options = args.options || {};
@@ -317,19 +317,34 @@
           if (error) {
             return callback(error);
           }
-          return collection.remove(query, options, function(error, result) {
-            collection.close();
-            return callback(error, result);
+          return collection.deleteMany(query, options, function(error, result) {
+            return collection.count(query, {}, function(error, count) {
+              collection.close();
+              return callback(error, result.deletedCount);
+            });
           });
         };
       })(this));
     };
 
-    Model.prototype.remove = function(args) {
-      args.query = {
+    Model.prototype["delete"] = function(args) {
+      var callback, options, query;
+      callback = args.callback;
+      options = args.options || {};
+      query = {
         _id: this._id
       };
-      return this.constructor.remove(args);
+      return this.constructor.collection((function(_this) {
+        return function(error, collection) {
+          if (error) {
+            return callback(error);
+          }
+          return collection.deleteOne(query, options, function(error, result) {
+            collection.close();
+            return callback(error);
+          });
+        };
+      })(this));
     };
 
     Model._handleIdQuery = function(query) {

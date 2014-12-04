@@ -546,16 +546,16 @@ class Model extends DataModel
       )
     )
 
-  # @remove 
+  # @delete
   # -------
-  # Remove records from collection
+  # Delete records from collection
   #
-  # **query** : query identifying docs to remove
+  # **query** : query identifying docs to delete
   #
   # **callback** : called to return (error)
   #
   # *options* : remove options
-  @remove : (args)->
+  @delete : (args)->
     query    = args.query
     options  = args.options || {}
     callback = args.callback
@@ -564,22 +564,35 @@ class Model extends DataModel
       if error
         return callback(error)
 
-      collection.remove(query, options, (error, result)->
-        collection.close()
-        callback(error, result)
+      collection.deleteMany(query, options, (error, result)->
+        collection.count(query, {}, (error, count)->
+          collection.close()
+          callback(error, result.deletedCount)
+        )
       )
     )
 
-  # remove
+  # delete
   # ------
-  # Remove this model from the db
+  # Delete this model from the db
   #
   # **callback** : called to return (error)
   #
-  # *options* : remove options
-  remove: (args)->
-    args.query = { _id : @_id }
-    @constructor.remove(args)
+  # *options* : delete options
+  delete : (args)->
+    callback = args.callback
+    options  = args.options || {}
+    query    = { _id : @_id }
+    
+    @constructor.collection((error, collection)=>
+      if error
+        return callback(error)
+
+      collection.deleteOne(query, options, (error, result)->
+        collection.close()
+        callback(error)
+      )
+    )
 
 
   # *INTERNAL METHODS*
