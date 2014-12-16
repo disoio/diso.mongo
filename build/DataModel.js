@@ -208,7 +208,7 @@
           part = parts[_i];
           data = data[part];
         }
-        return data[last] = schema ? Type(schema, Schema) ? new schema.Model(value) : schema.cast(value) : value;
+        return data[last] = schema ? Type(schema, Schema) ? Type(value, schema.Model) ? value : new schema.Model(value) : schema.cast(value) : value;
       } else {
         data = this._data;
         for (_j = 0, _len1 = parts.length; _j < _len1; _j++) {

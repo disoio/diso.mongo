@@ -234,6 +234,7 @@ class DataModel extends BaseModel
   # validation. Should return error if validation fails, or
   # null if validation succeeded
   validate: ()->
+    # TODO : use https://github.com/hapijs/joi
     return null
 
   # *INTERNAL METHODS*
@@ -332,7 +333,11 @@ class DataModel extends BaseModel
         # model's constructor which will in turn call 
         # cast. otherwise call cast directly.
         if Type(schema, Schema)
-          new schema.Model(value)
+          # only cast if it isn't already the right type
+          if Type(value, schema.Model)
+            value
+          else
+            new schema.Model(value)
         else
           schema.cast(value)
       else

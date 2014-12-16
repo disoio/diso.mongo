@@ -814,8 +814,7 @@ null if validation succeeded</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">validate</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
-    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">validate</span>: <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span></pre></div></div>
             
         </li>
         
@@ -826,9 +825,11 @@ null if validation succeeded</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-45">&#182;</a>
               </div>
-              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
+              <p>TODO : use <a href="https://github.com/hapijs/joi">https://github.com/hapijs/joi</a></p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span></pre></div></div>
             
         </li>
         
@@ -839,7 +840,8 @@ null if validation succeeded</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-46">&#182;</a>
               </div>
-              
+              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
+
             </div>
             
         </li>
@@ -851,8 +853,7 @@ null if validation succeeded</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-47">&#182;</a>
               </div>
-              <h2 id="_map">_map</h2>
-
+              
             </div>
             
         </li>
@@ -863,6 +864,19 @@ null if validation succeeded</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <h2 id="_map">_map</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
               </div>
               <p>Traverses this model and its embedded models and reference
 models to produce a plain object of its data.</p>
@@ -895,11 +909,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-49">
+        <li id="section-50">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-49">&#182;</a>
+                <a class="pilcrow" href="#section-50">&#182;</a>
               </div>
               <p>atom function that gets mapped across the object</p>
 
@@ -929,11 +943,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-50">
+        <li id="section-51">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-50">&#182;</a>
+                <a class="pilcrow" href="#section-51">&#182;</a>
               </div>
               <p>add model key if arg present</p>
 
@@ -947,11 +961,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-51">
+        <li id="section-52">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-51">&#182;</a>
+                <a class="pilcrow" href="#section-52">&#182;</a>
               </div>
               <h2 id="_datapath">_dataPath</h2>
 
@@ -960,11 +974,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-52">
+        <li id="section-53">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-52">&#182;</a>
+                <a class="pilcrow" href="#section-53">&#182;</a>
               </div>
               <p>Get or set the value at path.</p>
 <h3 id="required-args">required args</h3>
@@ -985,11 +999,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-53">
+        <li id="section-54">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-53">&#182;</a>
+                <a class="pilcrow" href="#section-54">&#182;</a>
               </div>
               <p>unpack the path </p>
 
@@ -1000,11 +1014,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-54">
+        <li id="section-55">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-54">&#182;</a>
+                <a class="pilcrow" href="#section-55">&#182;</a>
               </div>
               <p>if a value is passed this is a set    </p>
 
@@ -1024,11 +1038,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-55">
+        <li id="section-56">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-55">&#182;</a>
+                <a class="pilcrow" href="#section-56">&#182;</a>
               </div>
               <p>if this attr’s schema is a model, use that 
 model’s constructor which will in turn call 
@@ -1036,8 +1050,25 @@ cast. otherwise call cast directly.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> Type(schema, Schema)
-          <span class="hljs-keyword">new</span> schema.Model(value)
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> Type(schema, Schema)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-57">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-57">&#182;</a>
+              </div>
+              <p>only cast if it isn’t already the right type</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span> Type(value, schema.Model)
+            value
+          <span class="hljs-keyword">else</span>
+            <span class="hljs-keyword">new</span> schema.Model(value)
         <span class="hljs-keyword">else</span>
           schema.cast(value)
       <span class="hljs-keyword">else</span>
@@ -1046,11 +1077,11 @@ cast. otherwise call cast directly.</p>
         </li>
         
         
-        <li id="section-56">
+        <li id="section-58">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-56">&#182;</a>
+                <a class="pilcrow" href="#section-58">&#182;</a>
               </div>
               <p>otherwise it’s a get</p>
 
