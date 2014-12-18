@@ -1,6 +1,6 @@
 {
   "name": "diso.mongo",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Schema and denormalization patterns for MongoDB",
   "main": "build/index.js",
   "scripts": {

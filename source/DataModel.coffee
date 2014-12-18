@@ -112,6 +112,18 @@ class DataModel extends BaseModel
 
     @_schema.cast(data)
 
+  # @mixin
+  # ------
+  # use dotmix mixins 
+  # https://github.com/stephenhandley/dotmix
+  @mixin : (mixins)->
+    unless Type(mixins, Array)
+      mixins = [mixins]
+
+    for mixin in mixins
+      mixin.mix(into : @)
+
+
   # attributeExists
   # ---------------
   # check whether this model's schema defines an attribute 

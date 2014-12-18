@@ -91,6 +91,21 @@
       return this._schema.cast(data);
     };
 
+    DataModel.mixin = function(mixins) {
+      var mixin, _i, _len, _results;
+      if (!Type(mixins, Array)) {
+        mixins = [mixins];
+      }
+      _results = [];
+      for (_i = 0, _len = mixins.length; _i < _len; _i++) {
+        mixin = mixins[_i];
+        _results.push(mixin.mix({
+          into: this
+        }));
+      }
+      return _results;
+    };
+
     DataModel.prototype.attributeExists = function(path) {
       return utils.splitPath(path);
     };

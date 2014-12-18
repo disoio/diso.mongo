@@ -36,14 +36,17 @@ class Model extends DataModel
   # of the model i.e. BarfMuseum => barf_museum
   @collection_name : null
 
-  # @collection
-  # -----------
-  # Retrieve the collection backing this model 
-  @collection: (callback)->
+  @db : (callback)->
     unless @db_url
       throwError("#{@name} is missing required db_url")
     
-    MongoDB.MongoClient.connect(@db_url, (error, db)=>
+    MongoDB.MongoClient.connect(@db_url, callback)
+
+  # @collection
+  # -----------
+  # Retrieve the collection backing this model 
+  @collection : (callback)->
+    @db((error, db)=>
       if error
         return callback(error, null)
 
@@ -60,7 +63,6 @@ class Model extends DataModel
   # Return this models _id
   id : ()->
     @_id
-
 
   # *SCHEMA METHODS*
   # ----------------

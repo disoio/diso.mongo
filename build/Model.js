@@ -32,11 +32,15 @@
 
     Model.collection_name = null;
 
-    Model.collection = function(callback) {
+    Model.db = function(callback) {
       if (!this.db_url) {
         throwError("" + this.name + " is missing required db_url");
       }
-      return MongoDB.MongoClient.connect(this.db_url, (function(_this) {
+      return MongoDB.MongoClient.connect(this.db_url, callback);
+    };
+
+    Model.collection = function(callback) {
+      return this.db((function(_this) {
         return function(error, db) {
           var collection, collection_name;
           if (error) {

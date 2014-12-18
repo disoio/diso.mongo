@@ -220,7 +220,13 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection_name</span> : <span class="hljs-literal">null</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection_name</span> : <span class="hljs-literal">null</span>
+
+  <span class="hljs-property">@db</span> : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
+    <span class="hljs-keyword">unless</span> <span class="hljs-property">@db_url</span>
+      throwError(<span class="hljs-string">"<span class="hljs-subst">#{<span class="hljs-property">@name</span>}</span> is missing required db_url"</span>)
+    
+    MongoDB.MongoClient.connect(<span class="hljs-property">@db_url</span>, callback)</pre></div></div>
             
         </li>
         
@@ -248,11 +254,8 @@ of the model i.e. BarfMuseum =&gt; barf_museum</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection</span>: <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
-    <span class="hljs-keyword">unless</span> <span class="hljs-property">@db_url</span>
-      throwError(<span class="hljs-string">"<span class="hljs-subst">#{<span class="hljs-property">@name</span>}</span> is missing required db_url"</span>)
-    
-    MongoDB.MongoClient.connect(<span class="hljs-property">@db_url</span>, <span class="hljs-function"><span class="hljs-params">(error, db)</span>=&gt;</span>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-property">@collection</span> : <span class="hljs-function"><span class="hljs-params">(callback)</span>-&gt;</span>
+    <span class="hljs-property">@db</span>(<span class="hljs-function"><span class="hljs-params">(error, db)</span>=&gt;</span>
       <span class="hljs-keyword">if</span> error
         <span class="hljs-keyword">return</span> callback(error, <span class="hljs-literal">null</span>)
 
