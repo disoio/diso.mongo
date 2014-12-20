@@ -454,9 +454,13 @@ delete the alias from the data so it isn’t duped</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              <h2 id="attributeexists">attributeExists</h2>
+              <h2 id="id-">id </h2>
+<p>Return this models _id</p>
 
             </div>
+            
+            <div class="content"><div class='highlight'><pre>  id : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+    <span class="hljs-property">@_id</span></pre></div></div>
             
         </li>
         
@@ -466,6 +470,19 @@ delete the alias from the data so it isn’t duped</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <h2 id="attributeexists">attributeExists</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>check whether this model’s schema defines an attribute 
 with the given path</p>
@@ -478,11 +495,11 @@ with the given path</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <h2 id="attributeschema">attributeSchema</h2>
 
@@ -491,11 +508,11 @@ with the given path</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>Get the schema associate with this model’s attribute at
 the given path</p>
@@ -508,11 +525,11 @@ the given path</p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <h2 id="requireattribute">requireAttribute</h2>
 
@@ -521,11 +538,11 @@ the given path</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Throw an error if this model’s schema doesn’t define an 
 attribute with the given name</p>
@@ -539,26 +556,14 @@ attribute with the given name</p>
         </li>
         
         
-        <li id="section-28">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
-              </div>
-              <h2 id="-data-access-methods-"><em>DATA ACCESS METHODS</em></h2>
-
-            </div>
-            
-        </li>
-        
-        
         <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
-              
+              <h2 id="-data-access-methods-"><em>DATA ACCESS METHODS</em></h2>
+
             </div>
             
         </li>
@@ -570,8 +575,7 @@ attribute with the given name</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
-              <h2 id="data-">data </h2>
-
+              
             </div>
             
         </li>
@@ -582,6 +586,19 @@ attribute with the given name</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <h2 id="data-">data </h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>Convenience accessor for this model’s underlying data
 that performs different set/get behaviors depending on 
@@ -604,11 +621,11 @@ the arity and type signature of its arguments</p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <p>Full read
 calling with no arguments returns the complete, underlying data object</p>
@@ -624,11 +641,11 @@ calling with no arguments returns the complete, underlying data object</p>
         </li>
         
         
-        <li id="section-33">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>Attribute read
 calling with single String argument returns that attribute’s value</p>
@@ -642,11 +659,11 @@ calling with single String argument returns that attribute’s value</p>
         </li>
         
         
-        <li id="section-34">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>Filtered read
 with single Array argument, return a filtered version of the 
@@ -663,11 +680,11 @@ underlying data object with only the requested attributes</p>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>write</p>
 
@@ -683,11 +700,11 @@ underlying data object with only the requested attributes</p>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>Attribute write
 treat two arguments as a write of the given attribute</p>
@@ -702,11 +719,11 @@ treat two arguments as a write of the given attribute</p>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <h2 id="deflate">deflate</h2>
 
@@ -715,11 +732,11 @@ treat two arguments as a write of the given attribute</p>
         </li>
         
         
-        <li id="section-38">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
+                <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
               <p>Called by server to create json object for transfer over
 the wire</p>
@@ -740,11 +757,11 @@ the wire</p>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <h2 id="set">set</h2>
 
@@ -753,11 +770,11 @@ the wire</p>
         </li>
         
         
-        <li id="section-40">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
+                <a class="pilcrow" href="#section-41">&#182;</a>
               </div>
               <p>Convenience alias for .data(path, value)</p>
 
@@ -769,11 +786,11 @@ the wire</p>
         </li>
         
         
-        <li id="section-41">
+        <li id="section-42">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
+                <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
               <h2 id="get">get</h2>
 
@@ -782,11 +799,11 @@ the wire</p>
         </li>
         
         
-        <li id="section-42">
+        <li id="section-43">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-42">&#182;</a>
+                <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
               <p>Convenience alias for .data(path)</p>
 
@@ -798,26 +815,14 @@ the wire</p>
         </li>
         
         
-        <li id="section-43">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-43">&#182;</a>
-              </div>
-              <h2 id="-stub-methods-"><em>STUB METHODS</em></h2>
-
-            </div>
-            
-        </li>
-        
-        
         <li id="section-44">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-44">&#182;</a>
               </div>
-              
+              <h2 id="-stub-methods-"><em>STUB METHODS</em></h2>
+
             </div>
             
         </li>
@@ -829,8 +834,7 @@ the wire</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-45">&#182;</a>
               </div>
-              <h2 id="validate">validate</h2>
-
+              
             </div>
             
         </li>
@@ -841,6 +845,19 @@ the wire</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <h2 id="validate">validate</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
               </div>
               <p>Child classes can override this method to perform model
 validation. Should return error if validation fails, or
@@ -853,11 +870,11 @@ null if validation succeeded</p>
         </li>
         
         
-        <li id="section-47">
+        <li id="section-48">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-47">&#182;</a>
+                <a class="pilcrow" href="#section-48">&#182;</a>
               </div>
               <p>TODO : use <a href="https://github.com/hapijs/joi">https://github.com/hapijs/joi</a></p>
 
@@ -868,26 +885,14 @@ null if validation succeeded</p>
         </li>
         
         
-        <li id="section-48">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-48">&#182;</a>
-              </div>
-              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
-
-            </div>
-            
-        </li>
-        
-        
         <li id="section-49">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-49">&#182;</a>
               </div>
-              
+              <h2 id="-internal-methods-"><em>INTERNAL METHODS</em></h2>
+
             </div>
             
         </li>
@@ -899,8 +904,7 @@ null if validation succeeded</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-50">&#182;</a>
               </div>
-              <h2 id="_map">_map</h2>
-
+              
             </div>
             
         </li>
@@ -911,6 +915,19 @@ null if validation succeeded</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <h2 id="_map">_map</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
               </div>
               <p>Traverses this model and its embedded models and reference
 models to produce a plain object of its data.</p>
@@ -943,11 +960,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-52">
+        <li id="section-53">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-52">&#182;</a>
+                <a class="pilcrow" href="#section-53">&#182;</a>
               </div>
               <p>atom function that gets mapped across the object</p>
 
@@ -977,11 +994,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-53">
+        <li id="section-54">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-53">&#182;</a>
+                <a class="pilcrow" href="#section-54">&#182;</a>
               </div>
               <p>add model key if arg present</p>
 
@@ -995,11 +1012,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-54">
+        <li id="section-55">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-54">&#182;</a>
+                <a class="pilcrow" href="#section-55">&#182;</a>
               </div>
               <h2 id="_datapath">_dataPath</h2>
 
@@ -1008,11 +1025,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-55">
+        <li id="section-56">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-55">&#182;</a>
+                <a class="pilcrow" href="#section-56">&#182;</a>
               </div>
               <p>Get or set the value at path.</p>
 <h3 id="required-args">required args</h3>
@@ -1033,11 +1050,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-56">
+        <li id="section-57">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-56">&#182;</a>
+                <a class="pilcrow" href="#section-57">&#182;</a>
               </div>
               <p>unpack the path </p>
 
@@ -1048,11 +1065,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-57">
+        <li id="section-58">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-57">&#182;</a>
+                <a class="pilcrow" href="#section-58">&#182;</a>
               </div>
               <p>if a value is passed this is a set    </p>
 
@@ -1072,11 +1089,11 @@ in inflation on the other side of the wire</p>
         </li>
         
         
-        <li id="section-58">
+        <li id="section-59">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-58">&#182;</a>
+                <a class="pilcrow" href="#section-59">&#182;</a>
               </div>
               <p>if this attr’s schema is a model, use that 
 model’s constructor which will in turn call 
@@ -1089,11 +1106,11 @@ cast. otherwise call cast directly.</p>
         </li>
         
         
-        <li id="section-59">
+        <li id="section-60">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-59">&#182;</a>
+                <a class="pilcrow" href="#section-60">&#182;</a>
               </div>
               <p>only cast if it isn’t already the right type</p>
 
@@ -1111,11 +1128,11 @@ cast. otherwise call cast directly.</p>
         </li>
         
         
-        <li id="section-60">
+        <li id="section-61">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-60">&#182;</a>
+                <a class="pilcrow" href="#section-61">&#182;</a>
               </div>
               <p>otherwise it’s a get</p>
 

@@ -298,6 +298,8 @@ Schema        = Mongo.Schema
       <span class="hljs-string">"should have .deflate method that"</span> : {
         <span class="hljs-string">"returns structure like .data() with model names"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
           foods = ((<span class="hljs-keyword">new</span> Food(name : name)) <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> [<span class="hljs-string">'taco'</span>, <span class="hljs-string">'pizza'</span>, <span class="hljs-string">'orange'</span>])
+          food_ids = (f._id <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> foods)
+
           viewers = ({ name : name } <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> [<span class="hljs-string">'Jamie'</span>, <span class="hljs-string">'Eustace'</span>, <span class="hljs-string">'Delano'</span>])
 
           barf = <span class="hljs-keyword">new</span> Barf(
@@ -318,14 +320,18 @@ Schema        = Mongo.Schema
             contents : [
               {
                 name     : <span class="hljs-string">'taco'</span>
+                _id      : food_ids[<span class="hljs-number">0</span>]
                 <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
               }
               { 
                 name     : <span class="hljs-string">'pizza'</span>
+                _id      : food_ids[<span class="hljs-number">1</span>]
+
                 <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
               }
               { 
                 name     : <span class="hljs-string">'orange'</span>
+                _id      : food_ids[<span class="hljs-number">2</span>]
                 <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Food'</span>
               }
             ]
@@ -341,8 +347,9 @@ Schema        = Mongo.Schema
               }
             ]
             owner : { 
-              name : <span class="hljs-string">'Jamie'</span>
+              name   : <span class="hljs-string">'Jamie'</span>
               $model : <span class="hljs-string">'Barfee'</span>
+              _id    : barf.owner._id
             }  
             _id      : _id
             <span class="hljs-string">'$model'</span> : <span class="hljs-string">'Barf'</span>
@@ -351,7 +358,6 @@ Schema        = Mongo.Schema
           Assert.deepEqual(actual, expected)
         
       }
- 
 
     <span class="hljs-string">"that has invalid schema"</span>: {
       <span class="hljs-string">"should throw error"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
@@ -511,15 +517,64 @@ Schema        = Mongo.Schema
           Assert.deepEqual(fart_deets, fart_deets_expected)
       }
 
-    <span class="hljs-string">"should support custom id"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
-      derp = <span class="hljs-keyword">new</span> MyCustomIDBlob(
-        _id : <span class="hljs-string">'totally'</span>
-        name : <span class="hljs-string">'yes'</span>
-      )
+    <span class="hljs-string">"id"</span> : {
+      <span class="hljs-string">"should allow for custom"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+        derp = <span class="hljs-keyword">new</span> MyCustomIDBlob(
+          _id : <span class="hljs-string">'totally'</span>
+          name : <span class="hljs-string">'yes'</span>
+        )
 
-      Assert.equal(derp._id, <span class="hljs-string">'totally'</span>)
-      Assert.equal(derp.derp, <span class="hljs-string">'totally'</span>)
-      Assert.equal(derp.name, <span class="hljs-string">'yes'</span>)
+        Assert.equal(derp._id, <span class="hljs-string">'totally'</span>)
+        Assert.equal(derp.derp, <span class="hljs-string">'totally'</span>)
+        Assert.equal(derp.name, <span class="hljs-string">'yes'</span>)
+
+      <span class="hljs-string">"should have presence properly enforced"</span> : <span class="hljs-function"><span class="hljs-params">()</span>-&gt;</span>
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HasIdModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+          <span class="hljs-property">@schema</span>(
+            _id : Schema.ObjectID
+          )
+
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HasIdEmbeddedModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+          <span class="hljs-property">@schema</span>(
+            _id : Schema.ObjectID
+          )
+
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DefaultIdModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+          <span class="hljs-property">@schema</span>()
+
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DefaultIdEmbeddedModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+          <span class="hljs-property">@schema</span>()
+
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HasNoIdModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span></span>
+          <span class="hljs-property">@schema</span>(
+            _id : <span class="hljs-literal">false</span>
+          )
+
+        <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HasNoIdEmbeddedModel</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EmbeddedModel</span></span>
+          <span class="hljs-property">@schema</span>(
+            _id : <span class="hljs-literal">false</span>
+          )
+
+        id_tests = [
+          {
+            id     : <span class="hljs-literal">true</span>
+            models : [HasIdModel, HasIdEmbeddedModel, DefaultIdModel, DefaultIdEmbeddedModel]
+          }
+          {
+            id     : <span class="hljs-literal">false</span>
+            models : [HasNoIdModel, HasNoIdEmbeddedModel]
+          }
+        ]
+
+        <span class="hljs-keyword">for</span> test <span class="hljs-keyword">in</span> id_tests
+          <span class="hljs-keyword">for</span> M <span class="hljs-keyword">in</span> test.models
+            m = <span class="hljs-keyword">new</span> M()
+
+            <span class="hljs-keyword">if</span> test.id
+              Assert(<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> m._data)
+            <span class="hljs-keyword">else</span>
+              Assert(<span class="hljs-keyword">not</span> (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> m._data))
+    }
   }
 }</pre></div></div>
             

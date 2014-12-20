@@ -58,12 +58,6 @@ class Model extends DataModel
       callback(null, collection)
     )
 
-  # id 
-  # --
-  # Return this models _id
-  id : ()->
-    @_id
-
   # *SCHEMA METHODS*
   # ----------------
 
@@ -86,6 +80,9 @@ class Model extends DataModel
   #   })
   # ```
   @schema : (schema)->
+    unless schema
+      schema = {}
+      
     # Ensure that schema has an _id attribute
     unless ('_id' of schema)
       schema._id = Schema.ObjectID
@@ -414,7 +411,7 @@ class Model extends DataModel
   update : (args)->
     args.query = { _id : @_id }
 
-    callback = args.callback 
+    callback = args.callback
     args.callback = (error, result)->
       if error
         return callback(error, null)

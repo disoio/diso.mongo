@@ -123,6 +123,11 @@ class DataModel extends BaseModel
     for mixin in mixins
       mixin.mix(into : @)
 
+  # id 
+  # --
+  # Return this models _id
+  id : ()->
+    @_id
 
   # attributeExists
   # ---------------

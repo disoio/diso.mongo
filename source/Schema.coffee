@@ -431,12 +431,25 @@ class SchemaModel extends SchemaBase
   # ### required args
   # **definition** : schema definition to process
   _process : (definition)->
+    unless definition 
+      definition = {}
+
     processed = {}
 
     # helper for throwing attribute errors
     _throwError = (attr)->
       throwError("Invalid schema type for field: #{attr}")
-    
+
+    # Add id by default
+    add_id = true 
+    id_in_def = ('_id' of definition)
+    if (id_in_def and (definition._id is false))
+      add_id = false
+      delete definition._id
+
+    if (add_id and (not id_in_def))
+      definition._id = SchemaObjectID
+
     for attr, type of definition
       unless type
         _throwError(attr)

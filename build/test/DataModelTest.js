@@ -319,7 +319,7 @@
         return {
           "should have .deflate method that": {
             "returns structure like .data() with model names": function() {
-              var actual, barf, expected, foods, name, viewers, _id;
+              var actual, barf, expected, f, food_ids, foods, name, viewers, _id;
               foods = (function() {
                 var _i, _len, _ref, _results;
                 _ref = ['taco', 'pizza', 'orange'];
@@ -329,6 +329,15 @@
                   _results.push(new Food({
                     name: name
                   }));
+                }
+                return _results;
+              })();
+              food_ids = (function() {
+                var _i, _len, _results;
+                _results = [];
+                for (_i = 0, _len = foods.length; _i < _len; _i++) {
+                  f = foods[_i];
+                  _results.push(f._id);
                 }
                 return _results;
               })();
@@ -361,12 +370,15 @@
                 contents: [
                   {
                     name: 'taco',
+                    _id: food_ids[0],
                     '$model': 'Food'
                   }, {
                     name: 'pizza',
+                    _id: food_ids[1],
                     '$model': 'Food'
                   }, {
                     name: 'orange',
+                    _id: food_ids[2],
                     '$model': 'Food'
                   }
                 ],
@@ -381,7 +393,8 @@
                 ],
                 owner: {
                   name: 'Jamie',
-                  $model: 'Barfee'
+                  $model: 'Barfee',
+                  _id: barf.owner._id
                 },
                 _id: _id,
                 '$model': 'Barf'
@@ -604,15 +617,129 @@
           }
         };
       },
-      "should support custom id": function() {
-        var derp;
-        derp = new MyCustomIDBlob({
-          _id: 'totally',
-          name: 'yes'
-        });
-        Assert.equal(derp._id, 'totally');
-        Assert.equal(derp.derp, 'totally');
-        return Assert.equal(derp.name, 'yes');
+      "id": {
+        "should allow for custom": function() {
+          var derp;
+          derp = new MyCustomIDBlob({
+            _id: 'totally',
+            name: 'yes'
+          });
+          Assert.equal(derp._id, 'totally');
+          Assert.equal(derp.derp, 'totally');
+          return Assert.equal(derp.name, 'yes');
+        },
+        "should have presence properly enforced": function() {
+          var DefaultIdEmbeddedModel, DefaultIdModel, HasIdEmbeddedModel, HasIdModel, HasNoIdEmbeddedModel, HasNoIdModel, M, id_tests, m, test, _i, _len, _results;
+          HasIdModel = (function(_super) {
+            __extends(HasIdModel, _super);
+
+            function HasIdModel() {
+              return HasIdModel.__super__.constructor.apply(this, arguments);
+            }
+
+            HasIdModel.schema({
+              _id: Schema.ObjectID
+            });
+
+            return HasIdModel;
+
+          })(Model);
+          HasIdEmbeddedModel = (function(_super) {
+            __extends(HasIdEmbeddedModel, _super);
+
+            function HasIdEmbeddedModel() {
+              return HasIdEmbeddedModel.__super__.constructor.apply(this, arguments);
+            }
+
+            HasIdEmbeddedModel.schema({
+              _id: Schema.ObjectID
+            });
+
+            return HasIdEmbeddedModel;
+
+          })(EmbeddedModel);
+          DefaultIdModel = (function(_super) {
+            __extends(DefaultIdModel, _super);
+
+            function DefaultIdModel() {
+              return DefaultIdModel.__super__.constructor.apply(this, arguments);
+            }
+
+            DefaultIdModel.schema();
+
+            return DefaultIdModel;
+
+          })(Model);
+          DefaultIdEmbeddedModel = (function(_super) {
+            __extends(DefaultIdEmbeddedModel, _super);
+
+            function DefaultIdEmbeddedModel() {
+              return DefaultIdEmbeddedModel.__super__.constructor.apply(this, arguments);
+            }
+
+            DefaultIdEmbeddedModel.schema();
+
+            return DefaultIdEmbeddedModel;
+
+          })(EmbeddedModel);
+          HasNoIdModel = (function(_super) {
+            __extends(HasNoIdModel, _super);
+
+            function HasNoIdModel() {
+              return HasNoIdModel.__super__.constructor.apply(this, arguments);
+            }
+
+            HasNoIdModel.schema({
+              _id: false
+            });
+
+            return HasNoIdModel;
+
+          })(Model);
+          HasNoIdEmbeddedModel = (function(_super) {
+            __extends(HasNoIdEmbeddedModel, _super);
+
+            function HasNoIdEmbeddedModel() {
+              return HasNoIdEmbeddedModel.__super__.constructor.apply(this, arguments);
+            }
+
+            HasNoIdEmbeddedModel.schema({
+              _id: false
+            });
+
+            return HasNoIdEmbeddedModel;
+
+          })(EmbeddedModel);
+          id_tests = [
+            {
+              id: true,
+              models: [HasIdModel, HasIdEmbeddedModel, DefaultIdModel, DefaultIdEmbeddedModel]
+            }, {
+              id: false,
+              models: [HasNoIdModel, HasNoIdEmbeddedModel]
+            }
+          ];
+          _results = [];
+          for (_i = 0, _len = id_tests.length; _i < _len; _i++) {
+            test = id_tests[_i];
+            _results.push((function() {
+              var _j, _len1, _ref, _results1;
+              _ref = test.models;
+              _results1 = [];
+              for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+                M = _ref[_j];
+                m = new M();
+                if (test.id) {
+                  _results1.push(Assert('_id' in m._data));
+                } else {
+                  _results1.push(Assert(!('_id' in m._data)));
+                }
+              }
+              return _results1;
+            })());
+          }
+          return _results;
+        }
       }
     }
   };

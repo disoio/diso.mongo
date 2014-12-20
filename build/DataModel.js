@@ -106,6 +106,10 @@
       return _results;
     };
 
+    DataModel.prototype.id = function() {
+      return this._id;
+    };
+
     DataModel.prototype.attributeExists = function(path) {
       return utils.splitPath(path);
     };

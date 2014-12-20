@@ -8,9 +8,9 @@ MongoDB = require('mongodb')
 # [Model](./Model.html)  
 # [EmbeddedModel](./EmbeddedModel.html)  
 # [Schema](./Schema.html)  
-Model = require('./Model')
+Model         = require('./Model')
 EmbeddedModel = require('./EmbeddedModel')
-Schema = require('./Schema')
+Schema        = require('./Schema')
 
 module.exports = {
   # Represents a document in a MongoDB collection

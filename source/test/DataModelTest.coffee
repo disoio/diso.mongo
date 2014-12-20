@@ -200,6 +200,8 @@ module.exports = {
       "should have .deflate method that" : {
         "returns structure like .data() with model names" : ()->
           foods = ((new Food(name : name)) for name in ['taco', 'pizza', 'orange'])
+          food_ids = (f._id for f in foods)
+
           viewers = ({ name : name } for name in ['Jamie', 'Eustace', 'Delano'])
 
           barf = new Barf(
@@ -220,14 +222,18 @@ module.exports = {
             contents : [
               {
                 name     : 'taco'
+                _id      : food_ids[0]
                 '$model' : 'Food'
               }
               { 
                 name     : 'pizza'
+                _id      : food_ids[1]
+
                 '$model' : 'Food'
               }
               { 
                 name     : 'orange'
+                _id      : food_ids[2]
                 '$model' : 'Food'
               }
             ]
@@ -243,8 +249,9 @@ module.exports = {
               }
             ]
             owner : { 
-              name : 'Jamie'
+              name   : 'Jamie'
               $model : 'Barfee'
+              _id    : barf.owner._id
             }  
             _id      : _id
             '$model' : 'Barf'
@@ -253,7 +260,6 @@ module.exports = {
           Assert.deepEqual(actual, expected)
         
       }
- 
 
     "that has invalid schema": {
       "should throw error" : ()->
@@ -413,14 +419,63 @@ module.exports = {
           Assert.deepEqual(fart_deets, fart_deets_expected)
       }
 
-    "should support custom id" : ()->
-      derp = new MyCustomIDBlob(
-        _id : 'totally'
-        name : 'yes'
-      )
+    "id" : {
+      "should allow for custom" : ()->
+        derp = new MyCustomIDBlob(
+          _id : 'totally'
+          name : 'yes'
+        )
 
-      Assert.equal(derp._id, 'totally')
-      Assert.equal(derp.derp, 'totally')
-      Assert.equal(derp.name, 'yes')
+        Assert.equal(derp._id, 'totally')
+        Assert.equal(derp.derp, 'totally')
+        Assert.equal(derp.name, 'yes')
+
+      "should have presence properly enforced" : ()->
+        class HasIdModel extends Model
+          @schema(
+            _id : Schema.ObjectID
+          )
+
+        class HasIdEmbeddedModel extends EmbeddedModel
+          @schema(
+            _id : Schema.ObjectID
+          )
+
+        class DefaultIdModel extends Model
+          @schema()
+
+        class DefaultIdEmbeddedModel extends EmbeddedModel
+          @schema()
+
+        class HasNoIdModel extends Model
+          @schema(
+            _id : false
+          )
+
+        class HasNoIdEmbeddedModel extends EmbeddedModel
+          @schema(
+            _id : false
+          )
+
+        id_tests = [
+          {
+            id     : true
+            models : [HasIdModel, HasIdEmbeddedModel, DefaultIdModel, DefaultIdEmbeddedModel]
+          }
+          {
+            id     : false
+            models : [HasNoIdModel, HasNoIdEmbeddedModel]
+          }
+        ]
+
+        for test in id_tests
+          for M in test.models
+            m = new M()
+
+            if test.id
+              Assert('_id' of m._data)
+            else
+              Assert(not ('_id' of m._data))
+    }
   }
 }

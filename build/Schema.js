@@ -401,11 +401,23 @@
     };
 
     SchemaModel.prototype._process = function(definition) {
-      var attr, processed, schema, type, _throwError;
+      var add_id, attr, id_in_def, processed, schema, type, _throwError;
+      if (!definition) {
+        definition = {};
+      }
       processed = {};
       _throwError = function(attr) {
         return throwError("Invalid schema type for field: " + attr);
       };
+      add_id = true;
+      id_in_def = '_id' in definition;
+      if (id_in_def && (definition._id === false)) {
+        add_id = false;
+        delete definition._id;
+      }
+      if (add_id && (!id_in_def)) {
+        definition._id = SchemaObjectID;
+      }
       for (attr in definition) {
         type = definition[attr];
         if (!type) {

@@ -56,11 +56,10 @@
       })(this));
     };
 
-    Model.prototype.id = function() {
-      return this._id;
-    };
-
     Model.schema = function(schema) {
+      if (!schema) {
+        schema = {};
+      }
       if (!('_id' in schema)) {
         schema._id = Schema.ObjectID;
       }
