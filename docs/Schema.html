@@ -106,7 +106,8 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p><a href="https://github.com/mongodb/node-mongodb-native">mongodb</a><br><a href="https://github.com/stephenhandley/type-of-is">type-of-is</a>  </p>
+              <p><a href="https://github.com/mongodb/node-mongodb-native">mongodb</a>
+<a href="https://github.com/stephenhandley/type-of-is">type-of-is</a></p>
 
             </div>
             
@@ -135,7 +136,9 @@ Type    = <span class="hljs-built_in">require</span>(<span class="hljs-string">'
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <p><a href="./BaseModel.html">BaseModel</a><br><a href="./ReferenceModel.html">ReferenceModel</a><br><a href="./utils.html">utils</a>  </p>
+              <p><a href="./BaseModel.html">BaseModel</a>
+<a href="./ReferenceModel.html">ReferenceModel</a>
+<a href="./utils.html">utils</a></p>
 
             </div>
             
@@ -274,7 +277,7 @@ that converts an object into an object of this type</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>A stub method that Schema, SchemaTypedArray, and 
+              <p>A stub method that Schema, SchemaTypedArray, and
 SchemaUntypedArray override to retrieve the schema for
 attributes they contain</p>
 <h3 id="required-args">required args</h3>
@@ -388,12 +391,12 @@ descendants override for custom behavior</p>
 This is the base Schema type used for ids</p>
 <p>Schemas definations that don’t specify an _id will use
 use MongoDB.ObjectID by default.</p>
-<p>However, when the user wants to have a different id 
-source, they can use the makeSchemaID function which 
+<p>However, when the user wants to have a different id
+source, they can use the makeSchemaID function which
 gets exported as Schema.ID to create a custom SchemaType
 for _id that can have an alias, disabled autogeneration,
-or custom generation logic for ids. </p>
-<p>Most of the time makeSchemaID should be sufficient to 
+or custom generation logic for ids.</p>
+<p>Most of the time makeSchemaID should be sufficient to
 create extensions, but in the case where the user wants
 access to this base class, they can do so via using
 Schema.ID.Base</p>
@@ -480,7 +483,7 @@ SchemaID and can be used for object’s primary _id</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">makeSchemaID</span> = <span class="hljs-params">(args)</span>-&gt;</span>  
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">makeSchemaID</span> = <span class="hljs-params">(args)</span>-&gt;</span>
   S = <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">SchemaID</span></span>
 
   PrimitiveSchemaType = _checkPrimitiveSchemaType(args.type)
@@ -491,7 +494,7 @@ SchemaID and can be used for object’s primary _id</p>
 
   <span class="hljs-keyword">if</span> (<span class="hljs-string">'alias'</span> <span class="hljs-keyword">of</span> args)
     S.prototype.alias = args.alias
-  
+
   S.prototype.auto = <span class="hljs-keyword">if</span> args.gen
     <span class="hljs-keyword">unless</span> Type(args.gen, Function)
       throwError(<span class="hljs-string">"SchemaID gen must be function"</span>)
@@ -543,7 +546,7 @@ makeSchemaID.Base = SchemaID</pre></div></div>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
-              <h2 id="generate-">generate </h2>
+              <h2 id="generate">generate</h2>
 
             </div>
             
@@ -1099,7 +1102,7 @@ casting of primitive types</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-63">&#182;</a>
               </div>
-              <p>This is used so to lookup the SchemaType for a 
+              <p>This is used so to lookup the SchemaType for a
 javascript or mongodb primitive.</p>
 
             </div>
@@ -1109,7 +1112,7 @@ javascript or mongodb primitive.</p>
     ps = <span class="hljs-keyword">new</span> PS()
     ps.type
   )
-<span class="hljs-function">  
+<span class="hljs-function">
   <span class="hljs-params">(type)</span>-&gt;</span>
     index = _primitive_types.indexOf(type)
     <span class="hljs-keyword">if</span> (index <span class="hljs-keyword">is</span> -<span class="hljs-number">1</span>)
@@ -1151,7 +1154,7 @@ javascript or mongodb primitive.</p>
     <span class="hljs-keyword">return</span> schema_type
 
   PrimitiveSchemaType = _schemaTypeForPrimitive(schema_type)
-  
+
   <span class="hljs-keyword">if</span> PrimitiveSchemaType
     PrimitiveSchemaType
   <span class="hljs-keyword">else</span>
@@ -1250,7 +1253,7 @@ SomeModel.reference([‘model’, ‘attrs’, ‘to’, ‘denorm’])</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-71">&#182;</a>
               </div>
-              <h2 id="cast-">cast </h2>
+              <h2 id="cast">cast</h2>
 
             </div>
             
@@ -1346,7 +1349,7 @@ constructor gets called via Model.schema()</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-77">&#182;</a>
               </div>
-              <p>create an instance and attach the associated model, 
+              <p>create an instance and attach the associated model,
 processing the passed schema definition in the process</p>
 <h3 id="required-args">required args</h3>
 <p><strong>schema</strong> : the schema definition to process and
@@ -1459,7 +1462,7 @@ processing the passed schema definition in the process</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  _process : <span class="hljs-function"><span class="hljs-params">(definition)</span>-&gt;</span>
-    <span class="hljs-keyword">unless</span> definition 
+    <span class="hljs-keyword">unless</span> definition
       definition = {}
 
     processed = {}</pre></div></div>
@@ -1493,7 +1496,7 @@ processing the passed schema definition in the process</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    add_id = <span class="hljs-literal">true</span> 
+            <div class="content"><div class='highlight'><pre>    add_id = <span class="hljs-literal">true</span>
     id_in_def = (<span class="hljs-string">'_id'</span> <span class="hljs-keyword">of</span> definition)
     <span class="hljs-keyword">if</span> (id_in_def <span class="hljs-keyword">and</span> (definition._id <span class="hljs-keyword">is</span> <span class="hljs-literal">false</span>))
       add_id = <span class="hljs-literal">false</span>
@@ -1532,13 +1535,13 @@ processing the passed schema definition in the process</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-87">&#182;</a>
               </div>
-              <p>if schema value is an Array with no arguments 
+              <p>if schema value is an Array with no arguments
 create an untyped array that doesn’t cast</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">new</span> SchemaUntypedArray()
-        
+
         <span class="hljs-keyword">else</span></pre></div></div>
             
         </li>
@@ -1550,19 +1553,19 @@ create an untyped array that doesn’t cast</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-88">&#182;</a>
               </div>
-              <p>if schema value is Array with single value, assume 
+              <p>if schema value is Array with single value, assume
 that value is the type, process it as an atom, and
 use the result as the type for the array schema type</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>          type = <span class="hljs-property">@_processAtom</span>(type[<span class="hljs-number">0</span>])
-          
+
           <span class="hljs-keyword">unless</span> type
             _throwError(attr)
 
-          <span class="hljs-keyword">new</span> SchemaTypedArray(type)  
-      
+          <span class="hljs-keyword">new</span> SchemaTypedArray(type)
+
       <span class="hljs-keyword">else</span></pre></div></div>
             
         </li>
@@ -1584,7 +1587,7 @@ use the result as the type for the array schema type</p>
           _throwError(attr)
 
         schema
-    
+
     processed</pre></div></div>
             
         </li>
@@ -1653,7 +1656,7 @@ null to indicate failure to process successfully</p>
                 <a class="pilcrow" href="#section-93">&#182;</a>
               </div>
               <p>models already have had their schema processed via their
-own own call to Model.schema, so just return their 
+own own call to Model.schema, so just return their
 instance of this class</p>
 
             </div>
@@ -1676,7 +1679,7 @@ instance of this class</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>      PrimitiveType = _checkPrimitiveSchemaType(type)
-      <span class="hljs-keyword">if</span> PrimitiveType 
+      <span class="hljs-keyword">if</span> PrimitiveType
         <span class="hljs-keyword">new</span> PrimitiveType()
       <span class="hljs-keyword">else</span>
         <span class="hljs-literal">null</span></pre></div></div>
@@ -1803,7 +1806,7 @@ get its associated schema</p>
 
         <span class="hljs-keyword">unless</span> (schema <span class="hljs-keyword">instanceof</span> SchemaBase)
           throwError(<span class="hljs-string">"Invalid schema for <span class="hljs-subst">#{k}</span>: <span class="hljs-subst">#{schema}</span>"</span>)
-        
+
         <span class="hljs-keyword">try</span>
           data[k] = <span class="hljs-keyword">if</span> Type(schema, SchemaModel)</pre></div></div>
             
@@ -1833,7 +1836,7 @@ an instance with the value</p>
 
         <span class="hljs-keyword">catch</span> error
           throwError(<span class="hljs-string">"<span class="hljs-subst">#{k}</span>: <span class="hljs-subst">#{error}</span>"</span>)
-                          
+
       <span class="hljs-keyword">else</span></pre></div></div>
             
         </li>
@@ -1863,7 +1866,7 @@ data only if this schema isn’t strict</p>
                 <a class="pilcrow" href="#section-105">&#182;</a>
               </div>
               <p>if this schema has an _id and the data is missing it
-generate it from the </p>
+generate it from the</p>
 
             </div>
             
@@ -1949,7 +1952,7 @@ retrive their schema</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-110">&#182;</a>
               </div>
-              <p>Used to represent an attribute that is an array of 
+              <p>Used to represent an attribute that is an array of
 elements all of a specific type</p>
 
             </div>
@@ -1998,7 +2001,7 @@ elements all of a specific type</p>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">unless</span> Array.isArray(values)
       throwError(<span class="hljs-string">"Expecting array"</span>)
-    
+
     values.map(<span class="hljs-function"><span class="hljs-params">(value)</span>=&gt;</span></pre></div></div>
             
         </li>
@@ -2010,7 +2013,7 @@ elements all of a specific type</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-114">&#182;</a>
               </div>
-              <p>for each element in the array, cast it to an 
+              <p>for each element in the array, cast it to an
 instance of this type</p>
 
             </div>
@@ -2034,7 +2037,7 @@ instance of this type</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-115">&#182;</a>
               </div>
-              <h2 id="istype-">isType </h2>
+              <h2 id="istype">isType</h2>
 
             </div>
             
@@ -2116,7 +2119,7 @@ instance of this type</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-120">&#182;</a>
               </div>
-              <p>Used to represent an attribute that is an array of 
+              <p>Used to represent an attribute that is an array of
 elements of any type</p>
 
             </div>

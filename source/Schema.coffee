@@ -1,15 +1,15 @@
 # NPM dependencies
 # ------------------
-# [mongodb](https://github.com/mongodb/node-mongodb-native)  
-# [type-of-is](https://github.com/stephenhandley/type-of-is)  
+# [mongodb](https://github.com/mongodb/node-mongodb-native)
+# [type-of-is](https://github.com/stephenhandley/type-of-is)
 MongoDB = require('mongodb')
 Type    = require('type-of-is')
 
 # Local dependencies
 # ------------------
-# [BaseModel](./BaseModel.html)  
-# [ReferenceModel](./ReferenceModel.html)  
-# [utils](./utils.html)  
+# [BaseModel](./BaseModel.html)
+# [ReferenceModel](./ReferenceModel.html)
+# [utils](./utils.html)
 BaseModel      = require('./BaseModel')
 ReferenceModel = require('./ReferenceModel')
 utils          = require('./utils')
@@ -44,7 +44,7 @@ class SchemaBase
 
   # attribute
   # ---------
-  # A stub method that Schema, SchemaTypedArray, and 
+  # A stub method that Schema, SchemaTypedArray, and
   # SchemaUntypedArray override to retrieve the schema for
   # attributes they contain
   #
@@ -58,7 +58,7 @@ class SchemaBase
   # Test whether an object is of the type that this schema
   # object holds. Some descendants override this for custom
   # type checking
-  # 
+  #
   # ### required args
   # **obj** : object to test
   isType : (obj)->
@@ -71,7 +71,7 @@ class SchemaBase
   # ------
   # Convert an object to be of this Schema's type. Some
   # descendants override for custom behavior
-  # 
+  #
   # ### required args
   # **obj** : object to cast
   cast : (obj)->
@@ -85,7 +85,7 @@ class SchemaBase
       obj
     else
       new @type(obj)
-      
+
 # SchemaID
 # ========
 # Representing the primary id used to identify an object.
@@ -94,13 +94,13 @@ class SchemaBase
 # Schemas definations that don't specify an _id will use
 # use MongoDB.ObjectID by default.
 #
-# However, when the user wants to have a different id 
-# source, they can use the makeSchemaID function which 
+# However, when the user wants to have a different id
+# source, they can use the makeSchemaID function which
 # gets exported as Schema.ID to create a custom SchemaType
 # for _id that can have an alias, disabled autogeneration,
-# or custom generation logic for ids. 
+# or custom generation logic for ids.
 #
-# Most of the time makeSchemaID should be sufficient to 
+# Most of the time makeSchemaID should be sufficient to
 # create extensions, but in the case where the user wants
 # access to this base class, they can do so via using
 # Schema.ID.Base
@@ -119,15 +119,15 @@ class SchemaID extends SchemaBase
 # ------------
 # This function returns constructors for classes that extend
 # SchemaID and can be used for object's primary _id
-# 
+#
 # ### required args
 # **type** : the type for _id
-# 
+#
 # ### optional args
 # **alias** : alias for _id
 #
 # **gen** : function used for generating ids
-makeSchemaID = (args)->  
+makeSchemaID = (args)->
   S = class extends SchemaID
 
   PrimitiveSchemaType = _checkPrimitiveSchemaType(args.type)
@@ -138,7 +138,7 @@ makeSchemaID = (args)->
 
   if ('alias' of args)
     S.prototype.alias = args.alias
-  
+
   S.prototype.auto = if args.gen
     unless Type(args.gen, Function)
       throwError("SchemaID gen must be function")
@@ -158,7 +158,7 @@ class SchemaObjectID extends SchemaID
   type : MongoDB.ObjectID
   auto : true
 
-  # generate 
+  # generate
   # --------
   generate : ()->
     new MongoDB.ObjectID()
@@ -300,14 +300,14 @@ _primitive_schemas = [
 
 # _schemaTypeForPrimitive
 # -----------------------
-# This is used so to lookup the SchemaType for a 
+# This is used so to lookup the SchemaType for a
 # javascript or mongodb primitive.
 _schemaTypeForPrimitive = (()->
   _primitive_types = _primitive_schemas.map((PS)->
     ps = new PS()
     ps.type
   )
-  
+
   (type)->
     index = _primitive_types.indexOf(type)
     if (index is -1)
@@ -319,7 +319,7 @@ _schemaTypeForPrimitive = (()->
 # _checkPrimitiveSchemaType
 # -------------------------
 # Make sure a SchemaType is primitive. Returns null if not
-# 
+#
 # ### required args
 # **schema_type** : the schema type to check
 _checkPrimitiveSchemaType = (schema_type)->
@@ -327,7 +327,7 @@ _checkPrimitiveSchemaType = (schema_type)->
     return schema_type
 
   PrimitiveSchemaType = _schemaTypeForPrimitive(schema_type)
-  
+
   if PrimitiveSchemaType
     PrimitiveSchemaType
   else
@@ -360,7 +360,7 @@ class SchemaReference extends SchemaBase
     unless ('_id' of @attributes)
       @attributes.push('_id')
 
-  # cast 
+  # cast
   # ----
   cast : (obj)->
     if Type.instance(obj, ReferenceModel)
@@ -387,7 +387,7 @@ class SchemaReference extends SchemaBase
 class SchemaModel extends SchemaBase
   # constructor
   # -----------
-  # create an instance and attach the associated model, 
+  # create an instance and attach the associated model,
   # processing the passed schema definition in the process
   #
   # ### required args
@@ -405,7 +405,7 @@ class SchemaModel extends SchemaBase
 
   # configuration for this schema
   _config : {
-    # 
+    #
     strict : false
   }
 
@@ -427,11 +427,11 @@ class SchemaModel extends SchemaBase
   # _process
   # --------
   # Process the schema definition
-  # 
+  #
   # ### required args
   # **definition** : schema definition to process
   _process : (definition)->
-    unless definition 
+    unless definition
       definition = {}
 
     processed = {}
@@ -441,7 +441,7 @@ class SchemaModel extends SchemaBase
       throwError("Invalid schema type for field: #{attr}")
 
     # Add id by default
-    add_id = true 
+    add_id = true
     id_in_def = ('_id' of definition)
     if (id_in_def and (definition._id is false))
       add_id = false
@@ -457,21 +457,21 @@ class SchemaModel extends SchemaBase
       processed[attr] = if Array.isArray(type)
         # process schema types that are arrays
         if (type.length is 0)
-          # if schema value is an Array with no arguments 
+          # if schema value is an Array with no arguments
           # create an untyped array that doesn't cast
           new SchemaUntypedArray()
-        
+
         else
-          # if schema value is Array with single value, assume 
+          # if schema value is Array with single value, assume
           # that value is the type, process it as an atom, and
           # use the result as the type for the array schema type
           type = @_processAtom(type[0])
-          
+
           unless type
             _throwError(attr)
 
-          new SchemaTypedArray(type)  
-      
+          new SchemaTypedArray(type)
+
       else
         # otherwise process the type as an atom
         schema = @_processAtom(type)
@@ -480,7 +480,7 @@ class SchemaModel extends SchemaBase
           _throwError(attr)
 
         schema
-    
+
     processed
 
   # _processAtom
@@ -504,18 +504,18 @@ class SchemaModel extends SchemaBase
 
     else if Type.extension(type, BaseModel)
       # models already have had their schema processed via their
-      # own own call to Model.schema, so just return their 
+      # own own call to Model.schema, so just return their
       # instance of this class
       type._schema
 
     else
       # for primitives check if there's a match, otherwise null
       PrimitiveType = _checkPrimitiveSchemaType(type)
-      if PrimitiveType 
+      if PrimitiveType
         new PrimitiveType()
       else
         null
-  
+
   # isType
   # ------
   isType : (obj)->
@@ -541,7 +541,7 @@ class SchemaModel extends SchemaBase
 
         unless (schema instanceof SchemaBase)
           throwError("Invalid schema for #{k}: #{schema}")
-        
+
         try
           data[k] = if Type(schema, SchemaModel)
             # when the schema attribute for this key is a SchemaModel
@@ -558,15 +558,15 @@ class SchemaModel extends SchemaBase
 
         catch error
           throwError("#{k}: #{error}")
-                          
+
       else
         # if key is not in the processed schema, add it to the
         # data only if this schema isn't strict
         unless @_config.strict
           data[k] = v
-    
+
     # if this schema has an _id and the data is missing it
-    # generate it from the 
+    # generate it from the
     if ('_id' of @processed_schema)
       id_schema = @processed_schema._id
 
@@ -578,7 +578,7 @@ class SchemaModel extends SchemaBase
   # attribute
   # ---------
   # Retrieve the schema for the attribute at path
-  # 
+  #
   # ### required args
   # **path** : path for the attribute
   attribute : (path)->
@@ -594,7 +594,7 @@ class SchemaModel extends SchemaBase
 
 # SchemaTypedArray
 # ================
-# Used to represent an attribute that is an array of 
+# Used to represent an attribute that is an array of
 # elements all of a specific type
 class SchemaTypedArray extends SchemaBase
 
@@ -604,9 +604,9 @@ class SchemaTypedArray extends SchemaBase
     # values must be an array
     unless Array.isArray(values)
       throwError("Expecting array")
-    
+
     values.map((value)=>
-      # for each element in the array, cast it to an 
+      # for each element in the array, cast it to an
       # instance of this type
       unless @type.isType(value)
         if Type(@type, SchemaModel)
@@ -617,8 +617,8 @@ class SchemaTypedArray extends SchemaBase
       else
         value
     )
-  
-  # isType 
+
+  # isType
   # ------
   # TODO : should test type of the subelements???
   isType : (obj)->
@@ -643,7 +643,7 @@ class SchemaTypedArray extends SchemaBase
 
 # SchemaUntypedArray
 # ==================
-# Used to represent an attribute that is an array of 
+# Used to represent an attribute that is an array of
 # elements of any type
 class SchemaUntypedArray extends SchemaBase
   # cast
@@ -652,7 +652,7 @@ class SchemaUntypedArray extends SchemaBase
     unless Array.isArray(values)
       throwError("Expecting array for key:#{k}")
     values
-  
+
   # isType
   # ------
   isType : (obj)->
