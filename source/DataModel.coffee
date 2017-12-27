@@ -1,19 +1,17 @@
 # NPM dependencies
 # ------------------
-# [type-of-is](https://github.com/stephenhandley/type-of-is)  
-# [mongodb](https://github.com/mongodb/node-mongodb-native)  
-# [async](https://github.com/caolan/async)  
-Type    = require('type-of-is')
-MongoDB = require('mongodb')
-Async   = require('async')
+# [type-of-is](https://github.com/stephenhandley/type-of-is)
+# [async](https://github.com/caolan/async)
+Type  = require('type-of-is')
+Async = require('async')
 
 # Local dependencies
 # ------------------
-# [BaseModel](./BaseModel.html)  
-# [ReferenceModel](./ReferenceModel.html)  
-# [Schema](./Schema.html)  
-# [utils](./utils.html)  
-BaseModel      = require('./BaseModel') 
+# [BaseModel](./BaseModel.html)
+# [ReferenceModel](./ReferenceModel.html)
+# [Schema](./Schema.html)
+# [utils](./utils.html)
+BaseModel      = require('./BaseModel')
 ReferenceModel = require('./ReferenceModel')
 Schema         = require('./Schema')
 utils          = require('./utils')
@@ -44,7 +42,7 @@ class DataModel extends BaseModel
   # -------
   # Called by child classes to define their schema. This
   # method gets passed an object defining the child class'
-  # schema attributes. This is processed and the result is 
+  # schema attributes. This is processed and the result is
   # used for data casting and validation
   #
   # ###required args
@@ -68,8 +66,8 @@ class DataModel extends BaseModel
               @_dataPath(k, val)
           })
 
-    # if the schema specifies an alias for the _id property, 
-    # an associated property is defined using the alias 
+    # if the schema specifies an alias for the _id property,
+    # an associated property is defined using the alias
     pschema = @_schema.processed_schema
     @id_has_alias = (('_id' of pschema) and pschema._id.alias)
 
@@ -78,7 +76,7 @@ class DataModel extends BaseModel
 
       if alias of @prototype
         throwError("Invalid alias: #{alias}, conflicts with exist property")
-      
+
       Object.defineProperty(@prototype, alias, {
         get : ()->
           @_data._id
@@ -94,19 +92,19 @@ class DataModel extends BaseModel
   # This is called by the constructor to cast data using
   # this model's schema. After handling _id aliasing, this
   # method delegates the cast to this model's schema object.
-  @cast: (data)->    
+  @cast: (data)->
     unless @_schema
       throwError("@schema has not been called for #{@name}")
-    
-    # if the id has an alias, we set _id from it and then 
+
+    # if the id has an alias, we set _id from it and then
     # delete the alias from the data so it isn't duped
     if @id_has_alias
       alias = @_schema.processed_schema._id.alias
-      
+
       if (alias of data)
         if ('_id' of data)
           throwError("Cannot pass _id and its alias, #{alias}, as data attributes")
-        
+
         data._id = data[alias]
         delete data[alias]
 
@@ -114,7 +112,7 @@ class DataModel extends BaseModel
 
   # @mixin
   # ------
-  # use dotmix mixins 
+  # use dotmix mixins
   # https://github.com/stephenhandley/dotmix
   @mixin : (mixins)->
     unless Type(mixins, Array)
@@ -123,7 +121,7 @@ class DataModel extends BaseModel
     for mixin in mixins
       mixin.mix(into : @)
 
-  # id 
+  # id
   # --
   # Return this models _id
   id : ()->
@@ -131,7 +129,7 @@ class DataModel extends BaseModel
 
   # attributeExists
   # ---------------
-  # check whether this model's schema defines an attribute 
+  # check whether this model's schema defines an attribute
   # with the given path
   attributeExists: (path)->
     utils.splitPath(path)
@@ -145,7 +143,7 @@ class DataModel extends BaseModel
 
   # requireAttribute
   # ----------------
-  # Throw an error if this model's schema doesn't define an 
+  # Throw an error if this model's schema doesn't define an
   # attribute with the given name
   requireAttribute: (attr)->
     unless @attributeExists(attr)
@@ -153,11 +151,11 @@ class DataModel extends BaseModel
 
   # *DATA ACCESS METHODS*
   # ---------------------
-  
-  # data 
+
+  # data
   # ----
   # Convenience accessor for this model's underlying data
-  # that performs different set/get behaviors depending on 
+  # that performs different set/get behaviors depending on
   # the arity and type signature of its arguments
   #
   # ()               : return model and its embedded models'
@@ -165,14 +163,14 @@ class DataModel extends BaseModel
   #
   # (<String>)       : read the attribute at the string path
   #
-  # (<Array>)        : read the attributes at each string 
+  # (<Array>)        : read the attributes at each string
   #                    in array
   #
-  # (<Object>)       : use each <String>,<val> pair of 
-  #                    attribute path & value in object to 
+  # (<Object>)       : use each <String>,<val> pair of
+  #                    attribute path & value in object to
   #                    set this model's data
   #
-  # (<String>,<val>) : set the attribute at the string path 
+  # (<String>,<val>) : set the attribute at the string path
   #                    to val
   data: (args...)->
     # Full read
@@ -190,7 +188,7 @@ class DataModel extends BaseModel
           return @_dataPath(arg)
 
         # Filtered read
-        # with single Array argument, return a filtered version of the 
+        # with single Array argument, return a filtered version of the
         # underlying data object with only the requested attributes
         when Array
           result = {}
@@ -219,7 +217,7 @@ class DataModel extends BaseModel
   # the wire
   #
   # ### required args
-  # **model_key** : The attribute name used to hold the model's 
+  # **model_key** : The attribute name used to hold the model's
   #                 constructor name to be used by inflate
   #
   # ### optional args
@@ -262,7 +260,7 @@ class DataModel extends BaseModel
   # Traverses this model and its embedded models and reference
   # models to produce a plain object of its data.
   #
-  # This is called via .data() and .deflate(). The difference 
+  # This is called via .data() and .deflate(). The difference
   # between the two are that data is primarily used before
   # persisting to the database, while deflate is called prior
   # to transfer over the wire to the client. In the latter case
@@ -270,13 +268,13 @@ class DataModel extends BaseModel
   # in inflation on the other side of the wire
   #
   # ###optional args
-  # **model_key** : If present, specifies the attribute name 
+  # **model_key** : If present, specifies the attribute name
   #                 used to hold this model's constructor name
   #
   # **attrs**     : Only include the specified attributes
   _map : (args)->
     args ?= {}
-    
+
     model_key = if ('model_key' of args)
       args.model_key
     else
@@ -314,29 +312,29 @@ class DataModel extends BaseModel
       result[model_key] = @constructor.name
 
     result
-  
+
   # _dataPath
   # ---------
   # Get or set the value at path.
-  # 
-  # ### required args 
+  #
+  # ### required args
   # **path** : can be simple string or composite path
-  #            consisting of . separated parts (in order 
+  #            consisting of . separated parts (in order
   #            to access subdocs, arrays, embedded models
-  # 
+  #
   # ### optional args
   # **value** : if value is specified, use it to set the
   #             attribute at path, otherwise return that
   #             attribute's value
   _dataPath: (path, value = null)->
     unless Type(path, String)
-      throwError("Must use string as path accessor") 
+      throwError("Must use string as path accessor")
 
-    # unpack the path 
+    # unpack the path
     parts = utils.splitPath(path)
 
-    # if a value is passed this is a set    
-    if value  
+    # if a value is passed this is a set
+    if value
       schema = @constructor._schema.attribute(path)
 
       data = @_data
@@ -346,8 +344,8 @@ class DataModel extends BaseModel
         data = data[part]
 
       data[last] = if schema
-        # if this attr's schema is a model, use that 
-        # model's constructor which will in turn call 
+        # if this attr's schema is a model, use that
+        # model's constructor which will in turn call
         # cast. otherwise call cast directly.
         if Type(schema, Schema)
           # only cast if it isn't already the right type
